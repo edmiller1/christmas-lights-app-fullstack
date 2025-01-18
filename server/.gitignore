@@ -1,0 +1,30 @@
+# Bun
+bun.lockb
+node_modules
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build
+dist
+build
+
+# Drizzle
+drizzle/*.sql
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+.DS_Store?
+._*
