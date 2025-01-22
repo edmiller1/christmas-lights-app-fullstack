@@ -1,26 +1,25 @@
-import { Hono } from 'hono'
-import { logger } from 'hono/logger'
-import { cors } from 'hono/cors';
-import { authRouter } from './routes/auth'
-import { authMiddleware } from './middleware/auth.middleware';
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { logger } from "hono/logger";
+import { showRoutes } from "hono/dev";
+import { authRouter } from "./routes/auth";
 
-const app = new Hono()
+const app = new Hono();
 
-app.use('*', logger(), cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
-  credentials: true,
-  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowHeaders: ["Authorization", "Content-Type"],
-  exposeHeaders: ["Set-Cookie"],
-}));
+// Common middleware
+app.use("*", logger());
+app.use("*", cors());
 
-app.route('/api/auth', authRouter)
+app.get("/", (c) => {
+  return c.text("Hono server running!");
+});
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+app.route("/api/auth", authRouter);
+
+// Show available routes in development
+showRoutes(app);
 
 export default {
-  port: process.env.PORT || 3000,
-  fetch: app.fetch.bind(app),
-}
+  port: 9000,
+  fetch: app.fetch,
+};
