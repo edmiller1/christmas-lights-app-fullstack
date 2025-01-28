@@ -1,4 +1,11 @@
+import { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+
+declare module "hono" {
+  interface ContextVariableMap {
+    user: User;
+  }
+}
 
 export async function authMiddleware(c: any, next: any) {
   const authHeader = c.req.header("Authorization");
