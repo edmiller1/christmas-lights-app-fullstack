@@ -11,7 +11,7 @@ authRouter.get("/callback", authMiddleware, async (c, next) => {
   try {
     const auth = c.get("user");
 
-    console.log("Auth:", auth);
+    console.log(auth);
 
     if (!auth) {
       return c.json({ isSynced: false });
@@ -34,7 +34,7 @@ authRouter.get("/callback", authMiddleware, async (c, next) => {
         notificationsOnAppRating: true,
         notificationsOnAppVerification: true,
         plan: "FREE",
-        provider: auth.user_metadata.provider,
+        provider: auth.identities?.[0].provider ?? "",
         createdAt: new Date(),
       });
     }

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const next = searchParams.get("next") ?? "/";
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+    return NextResponse.redirect(`${origin}/sign-in?error=true`);
   }
 
   try {
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error("Session exchange error:", error);
-      return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+      return NextResponse.redirect(`${origin}/sign-in?error=true`);
     }
 
     // Sync user with database
@@ -49,10 +49,10 @@ export async function GET(request: Request) {
       console.error("Database sync error:", syncError);
       // Even if sync fails, we might want to redirect to a specific error page
       // or to the dashboard with an error state
-      return NextResponse.redirect(`${origin}/auth/sync-error`);
+      return NextResponse.redirect(`${origin}/sign-in?error=true`);
     }
   } catch (error) {
     console.error("Callback route error:", error);
-    return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+    return NextResponse.redirect(`${origin}/sign-in?error=true`);
   }
 }
