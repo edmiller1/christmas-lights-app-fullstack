@@ -32,3 +32,81 @@ export interface Notification {
   updatedAt?: string;
   userId: string;
 }
+
+export interface MapboxSuggestion {
+  full_address: string;
+  mapbox_id: string;
+  name?: string;
+}
+
+export interface MapboxProps {
+  properties: {
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+    context: {
+      country: { name: string };
+      region: { name: string };
+      place: { name: string };
+    };
+  };
+}
+
+export interface MapboxResponse {
+  features: MapboxProps[];
+}
+
+export interface MapboxSearchResponse {
+  type: "FeatureCollection";
+  suggestions: MapboxProps[];
+  attribution: string;
+}
+
+export interface MapboxFeature {
+  type: "Feature";
+  id: string;
+  geometry: {
+    type: "Point";
+    coordinates: [number, number]; // [longitude, latitude]
+  };
+  properties: {
+    name: string;
+    mapbox_id: string;
+    feature_type: string;
+    place_type: string[];
+    context?: MapboxContext[];
+    address?: string;
+    full_address?: string;
+    postcode?: string;
+    city?: string;
+    region?: string;
+    country?: string;
+    country_code?: string;
+    street?: string;
+    street_number?: string;
+    category?: string;
+    maki?: string;
+    poi_category?: string[];
+    neighborhood?: string;
+    district?: string;
+  };
+  matching_text?: string;
+  matching_place_name?: string;
+  place_name: string;
+  center: [number, number]; // [longitude, latitude]
+  bbox?: [number, number, number, number]; // [west, south, east, north]
+  relevance: number;
+  internal_id?: string;
+  language?: string;
+}
+
+export interface MapboxContext {
+  id: string;
+  mapbox_id: string;
+  text: string;
+  text_en?: string;
+  language_en?: string;
+  wikidata?: string;
+  short_code?: string;
+}

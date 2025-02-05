@@ -16,14 +16,14 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Session } from "@supabase/supabase-js";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api";
 import { UserMenu } from "./user-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Props {
-  auth: Session | null;
+  auth: SupabaseUser | null;
 }
 
 interface SidebarItem {

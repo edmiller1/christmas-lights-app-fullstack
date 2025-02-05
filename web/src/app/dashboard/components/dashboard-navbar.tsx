@@ -1,4 +1,4 @@
-import { CreateButton } from "@/components/create-button";
+import { CreateButton } from "@/components/create-decoration/create-button";
 import { NotificationMenu } from "@/components/notification-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
