@@ -50,3 +50,26 @@ authRouter.get("/callback", authMiddleware, async (c, next) => {
     return c.json({ error: "Internal server error" }, 500);
   }
 });
+
+authRouter.get("/user", authMiddleware, async (c, next) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      throw new Error("No auth header");
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      throw new Error("No user found");
+    }
+
+    return c.json(user);
+  } catch (error) {
+    console.error("Error in user:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});

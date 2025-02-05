@@ -1,1 +1,7 @@
-export * from "./get-database-sync-status";
+import { getDatabaseSyncStatus } from "./getDatabaseSyncStatus";
+import { getUser } from "./getUser";
+
+export const auth = {
+  getDatabaseSyncStatus,
+  getUser,
+};
