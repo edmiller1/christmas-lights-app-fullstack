@@ -51,6 +51,7 @@ export const CreateDecoration = () => {
       />
       <Dialog open={dialogOpen} onOpenChange={() => setDialogOpen(false)}>
         <DialogContent
+          hideClose
           className="sm:max-w-[525px]"
           onInteractOutside={(e) => {
             e.preventDefault();

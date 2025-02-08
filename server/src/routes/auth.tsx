@@ -4,14 +4,15 @@ import { User } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "../lib/middleware";
 import { SyncResponse } from "./types";
+import { Resend } from "resend";
+import { Welcome } from "../emails/welcome";
 
 export const authRouter = new Hono();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 authRouter.get("/callback", authMiddleware, async (c, next) => {
   try {
     const auth = c.get("user");
-
-    console.log(auth);
 
     if (!auth) {
       return c.json({ isSynced: false });
@@ -37,6 +38,17 @@ authRouter.get("/callback", authMiddleware, async (c, next) => {
         provider: auth.identities?.[0].provider ?? "",
         createdAt: new Date(),
       });
+
+      const { error } = await resend.emails.send({
+        from: "Christmas Lights App <hello@christmaslightsapp.com>",
+        to: auth.email!,
+        subject: "Welcome",
+        react: <Welcome />,
+      });
+
+      if (error) {
+        throw new Error("Failed to send welcome email");
+      }
     }
 
     const response: SyncResponse = {

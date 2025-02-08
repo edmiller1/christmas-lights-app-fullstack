@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { showRoutes } from "hono/dev";
 import { authRouter } from "./routes/auth";
+import { decorationRouter } from "./routes/decoration";
 
 const app = new Hono();
 
@@ -15,6 +16,7 @@ app.get("/", (c) => {
 });
 
 app.route("/api/auth", authRouter);
+app.route("/api/decoration", decorationRouter);
 
 // Show available routes in development
 showRoutes(app);

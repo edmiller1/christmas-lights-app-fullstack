@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/sidebar";
 import { User } from "@/lib/types";
 import { ThemeChange } from "./theme-change";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface Props {
   user: User | null;
@@ -28,6 +31,21 @@ interface Props {
 
 export const UserMenu = ({ user }: Props) => {
   const { isMobile } = useSidebar();
+  const supabase = createClient();
+  const router = useRouter();
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out. Please try again.");
+    }
+
+    toast.success("Successfully signed out");
+    setTimeout(() => {
+      router.push("/sign-in");
+    }, 1500);
+  };
 
   return (
     <SidebarMenu>
@@ -74,7 +92,7 @@ export const UserMenu = ({ user }: Props) => {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <ThemeChange />
-              <DropdownMenuItem>Sign out</DropdownMenuItem>
+              <DropdownMenuItem onClick={signOut}>Sign out</DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>

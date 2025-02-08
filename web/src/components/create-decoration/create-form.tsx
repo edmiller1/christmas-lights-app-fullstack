@@ -33,37 +33,37 @@ import {
 import useStore from "@/store/useStore";
 import success from "../../lottie/success.json";
 import { LottieAnimation } from "../lottie-animation";
+import { useMutation } from "@tanstack/react-query";
+import { CreateDecorationArgs } from "@/api/decoration/createDecoration/types";
+import { api } from "@/api";
 
 export const CreateForm = () => {
   const router = useRouter();
   const { decreaseStep, decorationImages } = useStore((state) => state);
 
   const [decorationCreated, setDecorationCreated] = useState<boolean>(false);
+  const [decorationLoading, setDecorationLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [suggestions, setSuggestions] = useState<unknown[]>([]);
-  const [locationInfo, setLocationInfo] = useState<{
-    latitude: number | undefined;
-    longitude: number | undefined;
-    country: string | undefined;
-    region: string | undefined;
-    city: string | undefined;
-  }>({ latitude: 0, longitude: 0, country: "", region: "", city: "" });
+  const [addressId, setAddressId] = useState<string>("");
 
-  // const createDecoration = api.decoration.createDecoration.useMutation({
-  //   onSuccess: ({ id }) => {
-  //     setDecorationCreated(true);
-  //     toast.success("Decoration created successfully!");
-  //     setTimeout(() => {
-  //       // Navigate to the new decoration
-  //       router.push(`/decorations/${id}`);
-  //     }, 1500);
-  //   },
-  //   onError: (error) => {
-  //     // Handle error (show toast, etc)
-  //     toast.error("Failed to create decoration, Please try again.");
-  //     console.error("Failed to create decoration:", error);
-  //   },
-  // });
+  const { mutateAsync } = useMutation({
+    mutationFn: async (data: CreateDecorationArgs) =>
+      api.decoration.createDecoration(data),
+    onSuccess: (data) => {
+      setDecorationCreated(true);
+      toast.success("Decoration created successfully!");
+      setTimeout(() => {
+        // Navigate to the new decoration
+        router.push(`/decorations/${data.decorationId}`);
+      }, 2000);
+    },
+    onError: (error) => {
+      setDecorationLoading(false);
+      setDecorationCreated(false);
+      toast.error("Failed to create decoration, Please try again. " + error);
+    },
+  });
 
   const formSchema = z.object({
     name: z.string().min(1, { message: "Decoration name is required" }),
@@ -77,40 +77,6 @@ export const CreateForm = () => {
       address: "",
     },
   });
-
-  const getLocation = async (suggestion: unknown) => {
-    // Type guard to check if suggestion has mapbox_id
-    if (
-      !suggestion ||
-      typeof suggestion !== "object" ||
-      !("mapbox_id" in suggestion)
-    ) {
-      throw new Error("Invalid suggestion format");
-    }
-
-    const typedSuggestion = suggestion as MapboxSuggestion;
-
-    const response = await fetch(
-      `https://api.mapbox.com/search/searchbox/v1/retrieve/${typedSuggestion.mapbox_id}?session_token=0f6c0283-69eb-41d1-88af-83b6da40a6a0&access_token=${process.env.NEXT_PUBLIC_MAPBOX_API_KEY}`
-    );
-
-    const jsonData = (await response.json()) as MapboxResponse;
-    const data = jsonData.features[0];
-
-    const latitude = data?.properties.coordinates.latitude;
-    const longitude = data?.properties.coordinates.longitude;
-    const country = data?.properties.context.country.name;
-    const region = data?.properties.context.region.name;
-    const city = data?.properties.context.place.name;
-
-    return {
-      latitude,
-      longitude,
-      country,
-      region,
-      city,
-    };
-  };
 
   const handleAddressSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -128,11 +94,12 @@ export const CreateForm = () => {
     const typedSuggestion = suggestion as MapboxSuggestion;
 
     setSearchQuery(typedSuggestion.full_address);
-    setLocationInfo(await getLocation(suggestion));
+    setAddressId(typedSuggestion.mapbox_id);
     setSuggestions([]);
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    setDecorationLoading(true);
     values.address = searchQuery;
 
     const decorationData = {
@@ -142,16 +109,13 @@ export const CreateForm = () => {
         index: img.index,
         base64Value: img.base64Value,
       })),
-      latitude: locationInfo.latitude!,
-      longitude: locationInfo.longitude!,
-      city: locationInfo.city!,
-      region: locationInfo.region!,
-      country: locationInfo.country!,
+      addressId,
     };
 
     try {
-      //createDecoration.mutate(decorationData);
+      mutateAsync(decorationData);
     } catch (error) {
+      setDecorationLoading(false);
       console.error("Failed to create decoration:", error);
     }
   };
@@ -185,14 +149,13 @@ export const CreateForm = () => {
             animationData={success}
           />
         </div>
-        <LoaderCircle className="h-64 w-64 animate-spin" />
       </>
     );
   }
 
   return (
     <>
-      {true ? (
+      {!decorationLoading ? (
         <>
           <DialogHeader>
             <DialogTitle>Decoration Details</DialogTitle>
@@ -269,7 +232,7 @@ export const CreateForm = () => {
                   <Button variant="secondary" onClick={() => decreaseStep(3)}>
                     Go back
                   </Button>
-                  <Button>Create</Button>
+                  <Button type="submit">Create</Button>
                 </div>
               </DialogFooter>
             </form>
@@ -282,7 +245,7 @@ export const CreateForm = () => {
           </DialogHeader>
           <div className="flex h-64 items-center justify-center">
             <LoaderCircle
-              className="h-40 w-40 animate-spin"
+              className="h-20 w-20 animate-spin"
               strokeWidth={1.5}
             />
           </div>
