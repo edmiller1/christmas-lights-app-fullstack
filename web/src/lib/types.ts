@@ -16,6 +16,26 @@ export interface User {
   updatedAt: Date;
 }
 
+export interface Decoration {
+  id: string;
+  name: string;
+  address: string;
+  verified: boolean;
+  verificationSubmitted: boolean;
+  latitude: number;
+  longitude: number;
+  country: string;
+  region: string;
+  city: string;
+  year: string;
+  createdAt: String;
+  userId: string;
+  routeId: string | null;
+  rating: number;
+  ratingCount: number;
+  viewCount: number;
+}
+
 export interface DecorationImage {
   id: string;
   url: string;

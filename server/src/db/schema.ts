@@ -175,4 +175,25 @@ export const DecorationRelations = relations(Decoration, ({ many, one }) => ({
   }),
 }));
 
+export const DecorationImageRelations = relations(
+  DecorationImage,
+  ({ many, one }) => ({
+    decoration: one(Decoration, {
+      fields: [DecorationImage.decorationId],
+      references: [Decoration.id],
+    }),
+  })
+);
+
+export const RatingRelations = relations(Rating, ({ many, one }) => ({
+  decoration: one(Decoration, {
+    fields: [Rating.decorationId],
+    references: [Decoration.id],
+  }),
+  user: one(User, {
+    fields: [Rating.userId],
+    references: [User.id],
+  }),
+}));
+
 //SCHEMAS

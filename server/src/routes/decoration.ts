@@ -4,8 +4,8 @@ import { authMiddleware } from "../lib/middleware";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { createDecorationSchema } from "../lib/schemas";
-import { Decoration, DecorationImage, User } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { Decoration, DecorationImage, Rating, User, View } from "../db/schema";
+import { eq, sql } from "drizzle-orm";
 import { Cloudinary } from "../lib/cloudinary";
 import { getLocationData } from "../lib/helpers";
 
@@ -111,3 +111,43 @@ decorationRouter.post(
     }
   }
 );
+
+decorationRouter.get("getDecoration", async (c, next) => {
+  try {
+    const decorationId = c.req.query("decorationId");
+
+    if (!decorationId) {
+      throw new Error("Decoration cannot be found");
+    }
+
+    const decoration = await db.query.Decoration.findFirst({
+      where: eq(Decoration.id, decorationId),
+      with: {
+        images: true,
+      },
+      extras: {
+        rating:
+          sql<number>`(SELECT COALESCE(AVG(rating), 0) FROM ${Rating} WHERE "decorationId" = ${decorationId})`.as(
+            "average_rating"
+          ),
+        ratingCount:
+          sql<number>`(SELECT COUNT(*) FROM ${Rating} WHERE "decorationId" = ${decorationId})`.as(
+            "rating_count"
+          ),
+        viewCount:
+          sql<number>`(SELECT COUNT(*) FROM ${View} WHERE "decorationId" = ${decorationId})`.as(
+            "view_count"
+          ),
+      },
+    });
+
+    if (!decoration) {
+      throw new Error("Decoration cannot be found");
+    }
+
+    return c.json(decoration);
+  } catch (error) {
+    console.error("Error getting decoration:", error);
+    return c.json({ error: "Internal server error " + error }, 500);
+  }
+});
