@@ -1,29 +1,53 @@
 import { relations, sql } from "drizzle-orm";
-import { pgEnum, pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 //ENUMS
 export const planEnum = pgEnum("plan", ["FREE", "PRO"]);
 
 //TABLES
-export const User = pgTable("user", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  externalId: text().notNull(),
-  name: t.varchar({ length: 255 }),
-  email: t.varchar({ length: 255 }).notNull(),
-  emailVerified: t.boolean().default(false),
-  provider: t.varchar({ length: 255 }),
-  image: t.varchar({ length: 255 }),
-  plan: planEnum().default("FREE"),
-  admin: t.boolean().default(false),
-  notificationsOnAppVerification: t.boolean().default(true),
-  notificationsOnAppRating: t.boolean().default(true),
-  notificationsByEmailVerification: t.boolean().default(true),
-  notificationsByEmailRating: t.boolean().default(true),
-  createdAt: t.timestamp().defaultNow().notNull(),
-  updatedAt: t
-    .timestamp({ mode: "date", withTimezone: true })
-    .$onUpdateFn(() => sql`now()`),
-}));
+export const User = pgTable(
+  "user",
+  {
+    id: uuid().notNull().primaryKey().defaultRandom(),
+    externalId: text("externalId").notNull(),
+    name: varchar("name", { length: 255 }),
+    email: varchar("email", { length: 255 }).notNull(),
+    emailVerified: boolean("emailVerified").default(false),
+    provider: varchar("provider", { length: 255 }),
+    image: varchar("image", { length: 255 }),
+    plan: planEnum("plan").default("FREE"),
+    admin: boolean("admin").default(false),
+    notificationsOnAppVerification: boolean(
+      "notificationsOnAppVerification"
+    ).default(true),
+    notificationsOnAppRating: boolean("notificationsOnAppRating").default(true),
+    notificationsByEmailVerification: boolean(
+      "notificationsByEmailVerification"
+    ).default(true),
+    notificationsByEmailRating: boolean("notificationsByEmailRating").default(
+      true
+    ),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", {
+      mode: "date",
+      withTimezone: true,
+    }).$onUpdateFn(() => sql`now()`),
+  },
+  (table) => ({
+    emailIdx: uniqueIndex("email_idx").on(table.email),
+  })
+);
 
 export const Decoration = pgTable("decoration", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -196,4 +220,9 @@ export const RatingRelations = relations(Rating, ({ many, one }) => ({
   }),
 }));
 
-//SCHEMAS
+export const ViewRelations = relations(View, ({ one }) => ({
+  decoration: one(Decoration, {
+    fields: [View.decorationId],
+    references: [Decoration.id],
+  }),
+}));

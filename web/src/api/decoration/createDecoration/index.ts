@@ -1,9 +1,9 @@
-import axiosInstance from "@/lib/axios";
 import { CreateDecorationArgs, createDecorationResponse } from "./types";
+import privateAxios from "@/lib/axios";
 
 export const createDecoration = async (data: CreateDecorationArgs) => {
-  const response = await axiosInstance.post<createDecorationResponse>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/decoration/createDecoration`,
+  const response = await privateAxios.post<createDecorationResponse>(
+    `/api/decoration/createDecoration`,
     data
   );
 

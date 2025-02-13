@@ -16,15 +16,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { User as SupabaseUser } from "@supabase/supabase-js";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/api";
 import { UserMenu } from "./user-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface Props {
-  auth: SupabaseUser | null;
-}
+import { useUser } from "@/hooks/useUser";
 
 interface SidebarItem {
   href: string;
@@ -58,17 +52,12 @@ const sidebarItems: SidebarCategory[] = [
   },
 ];
 
-export const DashboardSidebar = ({ auth }: Props) => {
+export const DashboardSidebar = () => {
   const pathname = usePathname();
 
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["get-user"],
-    queryFn: async () => {
-      return api.auth.getUser();
-    },
-  });
+  const { user } = useUser();
 
-  if (isLoading) {
+  if (!user) {
     return (
       <Sidebar>
         <SidebarHeader>
@@ -102,6 +91,7 @@ export const DashboardSidebar = ({ auth }: Props) => {
             height={100}
             alt="logo"
             className="h-12 w-12"
+            priority
           />
           <p className="font-semibold">Christmas Lights App</p>
         </div>

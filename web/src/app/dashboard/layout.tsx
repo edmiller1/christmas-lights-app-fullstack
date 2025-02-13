@@ -17,7 +17,7 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
     <MotionWrapper>
       <SidebarProvider>
         <div className="flex h-screen w-full">
-          <DashboardSidebar auth={data.user} />
+          <DashboardSidebar />
           <div className="flex flex-1 flex-col overflow-hidden">
             <DashboardNavbar />
             <main className="flex-1 overflow-y-auto p-4">{children}</main>

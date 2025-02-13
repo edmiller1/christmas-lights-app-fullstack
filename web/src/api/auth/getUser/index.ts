@@ -1,8 +1,8 @@
-import axiosInstance from "@/lib/axios";
+import privateAxios from "@/lib/axios";
 import { User } from "@/lib/types";
 
 export const getUser = async (): Promise<User> => {
-  const response = await axiosInstance.get<User>(
+  const response = await privateAxios.get<User>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/auth/user`
   );
 

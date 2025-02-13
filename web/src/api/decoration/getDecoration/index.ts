@@ -1,10 +1,9 @@
-import axiosInstance from "@/lib/axios";
-import { decoration } from "..";
+import { publicAxios } from "@/lib/axios";
 import { Decoration } from "@/lib/types";
 
 export const getDecoration = async (decorationId: string) => {
-  const response = await axiosInstance.get<Decoration>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/decoration/getDecoration`,
+  const response = await publicAxios.get<Decoration>(
+    `/api/decoration/getDecoration`,
     {
       params: {
         decorationId,

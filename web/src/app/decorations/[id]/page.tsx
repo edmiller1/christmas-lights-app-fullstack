@@ -3,6 +3,7 @@
 import { api } from "@/api";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { DecorationLoading } from "./components/decoration-loading";
 
 const DecorationPage = () => {
   const params = useParams();
@@ -25,7 +26,7 @@ const DecorationPage = () => {
   }
 
   if (getDecorationLoading) {
-    return <div>Loading...</div>;
+    return <DecorationLoading />;
   }
 
   if (!decoration) {

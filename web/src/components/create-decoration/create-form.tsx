@@ -25,11 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-import {
-  MapboxResponse,
-  MapboxSearchResponse,
-  MapboxSuggestion,
-} from "@/lib/types";
+import { MapboxSearchResponse, MapboxSuggestion } from "@/lib/types";
 import useStore from "@/store/useStore";
 import success from "../../lottie/success.json";
 import { LottieAnimation } from "../lottie-animation";

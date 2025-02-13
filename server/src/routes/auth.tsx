@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "../db";
-import { User } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { Decoration, User } from "../db/schema";
+import { eq, sql } from "drizzle-orm";
 import { authMiddleware } from "../lib/middleware";
 import { SyncResponse } from "./types";
 import { Resend } from "resend";
@@ -71,15 +71,17 @@ authRouter.get("/user", authMiddleware, async (c, next) => {
       throw new Error("No auth header");
     }
 
-    const user = await db.query.User.findFirst({
-      where: eq(User.externalId, auth.id),
-    });
+    const user = await db
+      .select()
+      .from(User)
+      .where(eq(User.externalId, auth.id))
+      .execute();
 
     if (!user) {
       throw new Error("No user found");
     }
 
-    return c.json(user);
+    return c.json(user[0]);
   } catch (error) {
     console.error("Error in user:", error);
     return c.json({ error: "Internal server error" }, 500);

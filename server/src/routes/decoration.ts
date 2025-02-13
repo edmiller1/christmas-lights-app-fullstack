@@ -112,42 +112,112 @@ decorationRouter.post(
   }
 );
 
-decorationRouter.get("getDecoration", async (c, next) => {
+decorationRouter.get("getDecoration", async (c) => {
   try {
     const decorationId = c.req.query("decorationId");
 
     if (!decorationId) {
-      throw new Error("Decoration cannot be found");
+      return c.json({ error: "Decoration ID is required" }, 400);
     }
 
-    const decoration = await db.query.Decoration.findFirst({
-      where: eq(Decoration.id, decorationId),
-      with: {
-        images: true,
-      },
-      extras: {
-        rating:
-          sql<number>`(SELECT COALESCE(AVG(rating), 0) FROM ${Rating} WHERE "decorationId" = ${decorationId})`.as(
-            "average_rating"
-          ),
-        ratingCount:
-          sql<number>`(SELECT COUNT(*) FROM ${Rating} WHERE "decorationId" = ${decorationId})`.as(
-            "rating_count"
-          ),
-        viewCount:
-          sql<number>`(SELECT COUNT(*) FROM ${View} WHERE "decorationId" = ${decorationId})`.as(
-            "view_count"
-          ),
-      },
-    });
+    const decoration = await db
+      .select({
+        id: Decoration.id,
+        name: Decoration.name,
+        address: Decoration.address,
+        verified: Decoration.verified,
+        latitude: Decoration.latitude,
+        longitude: Decoration.longitude,
+        country: Decoration.country,
+        region: Decoration.region,
+        city: Decoration.city,
+        year: Decoration.year,
+        createdAt: Decoration.createdAt,
+        userId: Decoration.userId,
+        viewCount: db.$count(View, eq(View.decorationId, decorationId)),
+        ratingCount: db.$count(Rating, eq(Rating.decorationId, decorationId)),
+        averageRating: sql<number>`
+        COALESCE(
+          (SELECT AVG(${Rating.rating}::numeric)::numeric(10,2)
+          FROM ${Rating}
+          WHERE ${Rating.decorationId} = ${decorationId}),
+          0
+        )
+      `,
+      })
+      .from(Decoration)
+      .where(eq(Decoration.id, decorationId))
+      .execute()
+      .then(async ([dec]) => {
+        if (!dec) return null;
+
+        const images = await db
+          .select()
+          .from(DecorationImage)
+          .where(eq(DecorationImage.decorationId, decorationId))
+          .orderBy(DecorationImage.index)
+          .execute();
+
+        return {
+          ...dec,
+          images,
+        };
+      });
 
     if (!decoration) {
-      throw new Error("Decoration cannot be found");
+      return c.json({ error: "Decoration not found" }, 404);
     }
 
     return c.json(decoration);
-  } catch (error) {
-    console.error("Error getting decoration:", error);
-    return c.json({ error: "Internal server error " + error }, 500);
+  } catch (error: any) {
+    console.error("Error getting decoration:", {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+    });
+    return c.json(
+      {
+        error: "Database error",
+        details: error.message,
+      },
+      500
+    );
   }
 });
+
+// decorationRouter.get("getDecoration", async (c, next) => {
+//   try {
+//     const decorationId = c.req.query("decorationId");
+
+//     if (!decorationId) {
+//       throw new Error("Decoration cannot be found");
+//     }
+
+//     const decoration = await db.query.Decoration.findFirst({
+//       where: eq(Decoration.id, decorationId),
+//       // extras: {
+//       //   rating:
+//       //     sql<number>`(SELECT COALESCE(AVG(rating), 0) FROM ${Rating} WHERE "decorationId" = ${decorationId})`.as(
+//       //       "average_rating"
+//       //     ),
+//       //   ratingCount:
+//       //     sql<number>`(SELECT COUNT(*) FROM ${Rating} WHERE "decorationId" = ${decorationId})`.as(
+//       //       "rating_count"
+//       //     ),
+//       //   viewCount:
+//       //     sql<number>`(SELECT COUNT(*) FROM ${View} WHERE "decorationId" = ${decorationId})`.as(
+//       //       "view_count"
+//       //     ),
+//       // },
+//     });
+
+//     if (!decoration) {
+//       throw new Error("Decoration cannot be found");
+//     }
+
+//     return c.json(decoration);
+//   } catch (error) {
+//     console.error("Error getting decoration:", error);
+//     return c.json({ error: "Internal server error " + error }, 500);
+//   }
+// });
