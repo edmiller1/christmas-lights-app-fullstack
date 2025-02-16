@@ -10,6 +10,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        "ch-pink": "#FF647F",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

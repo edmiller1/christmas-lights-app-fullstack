@@ -14,6 +14,8 @@ export interface User {
   notificationsByEmailRating: boolean;
   createdAt: Date;
   updatedAt: Date;
+  ratings: Rating[];
+  favourites: Favourite[];
 }
 
 export interface Decoration {
@@ -28,7 +30,7 @@ export interface Decoration {
   region: string;
   city: string;
   year: string;
-  createdAt: String;
+  createdAt: string;
   userId: string;
   routeId: string | null;
   rating: number;
@@ -43,6 +45,17 @@ export interface DecorationImage {
   base64Value: string;
 }
 
+export interface DecorationPicture {
+  id: string;
+  index: number;
+  largeUrl: string;
+  mediumUrl: string;
+  thumbnailUrl: string;
+  url: string;
+  publicId: string;
+  decorationId: string;
+}
+
 export interface Notification {
   id: string;
   title: string;
@@ -50,6 +63,22 @@ export interface Notification {
   unread: boolean;
   createdAt: string;
   updatedAt?: string;
+  userId: string;
+}
+
+export interface Rating {
+  id: string;
+  rating: number;
+  createdAt: string;
+  updatedAt?: string;
+  decorationId: string;
+  userId: string;
+}
+
+export interface Favourite {
+  id: string;
+  createdAt: string;
+  decorationId: string;
   userId: string;
 }
 

@@ -29,6 +29,13 @@
       "when": 1739355082538,
       "tag": "0003_purple_black_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1739689853777,
+      "tag": "0004_workable_sprite",
+      "breakpoints": true
     }
   ]
 }

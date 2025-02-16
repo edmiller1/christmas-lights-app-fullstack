@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db } from "../db";
-import { Decoration, User } from "../db/schema";
+import { Decoration, Favourite, Rating, User } from "../db/schema";
 import { eq, sql } from "drizzle-orm";
 import { authMiddleware } from "../lib/middleware";
 import { SyncResponse } from "./types";
@@ -75,13 +75,35 @@ authRouter.get("/user", authMiddleware, async (c, next) => {
       .select()
       .from(User)
       .where(eq(User.externalId, auth.id))
-      .execute();
+      .execute()
+      .then(async ([person]) => {
+        if (!person) return null;
+
+        const [ratings, favourites] = await Promise.all([
+          db
+            .select()
+            .from(Rating)
+            .where(eq(Rating.userId, person.id))
+            .execute(),
+          db
+            .select()
+            .from(Favourite)
+            .where(eq(Favourite.userId, person.id))
+            .execute(),
+        ]);
+
+        return {
+          ...person,
+          ratings,
+          favourites,
+        };
+      });
 
     if (!user) {
       throw new Error("No user found");
     }
 
-    return c.json(user[0]);
+    return c.json(user);
   } catch (error) {
     console.error("Error in user:", error);
     return c.json({ error: "Internal server error" }, 500);

@@ -20,3 +20,17 @@ export const getLocationData = async (addressId: string) => {
     city,
   };
 };
+
+export const getOptimizedImageUrls = (publicId: string) => {
+  const baseUrl = "https://res.cloudinary.com/drlwnmkq9/image/upload";
+
+  return {
+    url: `${baseUrl}/q_auto,f_auto/${publicId}`,
+
+    responsive: {
+      sm: `${baseUrl}/c_fill,w_640,q_auto,f_auto/${publicId}`,
+      md: `${baseUrl}/c_fill,w_1024,q_auto,f_auto/${publicId}`,
+      lg: `${baseUrl}/c_fill,w_1920,q_auto,f_auto/${publicId}`,
+    },
+  };
+};

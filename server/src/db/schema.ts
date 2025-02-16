@@ -173,11 +173,24 @@ export const Route = pgTable("route", (t) => ({
     .$onUpdateFn(() => sql`now()`),
 }));
 
+export const Favourite = pgTable("favourite", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  createdAt: t.timestamp().defaultNow().notNull(),
+  decorationId: t
+    .uuid()
+    .notNull()
+    .references(() => Decoration.id, { onDelete: "cascade" }),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => User.id, { onDelete: "cascade" }),
+}));
+
 //RELATIONS
 export const UserRelations = relations(User, ({ many }) => ({
   decorations: many(Decoration),
   ratings: many(Rating),
-  favourites: many(Decoration),
+  favourites: many(Favourite),
   history: many(Decoration),
   reports: many(Report),
   routes: many(Route),
@@ -223,6 +236,17 @@ export const RatingRelations = relations(Rating, ({ many, one }) => ({
 export const ViewRelations = relations(View, ({ one }) => ({
   decoration: one(Decoration, {
     fields: [View.decorationId],
+    references: [Decoration.id],
+  }),
+}));
+
+export const FavouriteRelations = relations(Favourite, ({ one }) => ({
+  user: one(User, {
+    fields: [Favourite.userId],
+    references: [User.id],
+  }),
+  decoration: one(Decoration, {
+    fields: [Favourite.decorationId],
     references: [Decoration.id],
   }),
 }));

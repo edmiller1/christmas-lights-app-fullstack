@@ -10,10 +10,14 @@ import { NotificationMenu } from "../notification-menu";
 import { useUser } from "@/hooks/useUser";
 import { UserMenu } from "./user-menu";
 
-export const Navbar = () => {
+interface Props {
+  className?: string;
+}
+
+export const Navbar = ({ className }: Props) => {
   const { user } = useUser();
   return (
-    <nav className="border-b">
+    <nav className={`border-b ${className}`}>
       <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-20">
         <div className="flex items-center">
           <Link href="/" className="flex items-center">
