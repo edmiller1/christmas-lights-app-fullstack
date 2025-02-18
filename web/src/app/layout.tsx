@@ -6,6 +6,7 @@ import Providers from "@/components/providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CreateDecoration } from "@/components/create-decoration/create-decoration";
 import { UserLocation } from "@/components/user-location";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 const nunito = Nunito({
   variable: "--font-nunito",

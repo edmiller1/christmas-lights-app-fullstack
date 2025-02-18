@@ -1,50 +1,22 @@
 "use client";
 
-import {
-  Bell,
-  Home,
-  PlusCircle,
-  SquarePlus,
-  Telescope,
-  UserCircle,
-} from "lucide-react";
+import { Bell, Home, PlusCircle, Telescope, UserCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { usePathname } from "next/navigation";
 import useStore from "@/store/useStore";
 
-export const MobileNavbar = () => {
+interface Props {
+  className?: string;
+}
+
+export const MobileNavbar = ({ className }: Props) => {
   const { setDialogOpen } = useStore((state) => state);
   const pathname = usePathname();
 
-  const NavButton = ({
-    icon,
-    label,
-    isActive,
-  }: {
-    icon: React.ReactNode;
-    label: string;
-    isActive: boolean;
-  }) => (
-    <Button
-      variant="ghost"
-      size="icon"
-      className={`flex flex-col items-center justify-center p-1 h-16 w-20 transition-colors ${
-        isActive ? "text-[#FF385C]" : ""
-      }`}
-    >
-      {icon}
-      <span
-        className={`text-xs mt-1 font-medium ${
-          isActive ? "text-[#FF385C]" : "text-gray-500"
-        }`}
-      >
-        {label}
-      </span>
-    </Button>
-  );
-
   return (
-    <nav className="fixed shadow w-full h-18 bottom-0 left-0 right-0 z-50 flex items-center border-t md:hidden">
+    <nav
+      className={`fixed shadow w-full h-18 bottom-0 left-0 right-0 z-50 flex items-center border-t ${className}`}
+    >
       <div className="flex flex-auto items-start justify-around">
         <Button
           variant="ghost"

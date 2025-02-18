@@ -159,3 +159,5 @@ export interface MapboxContext {
   wikidata?: string;
   short_code?: string;
 }
+
+export type MapType = mapboxgl.Map;
