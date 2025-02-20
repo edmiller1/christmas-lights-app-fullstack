@@ -33,9 +33,12 @@ export interface Decoration {
   createdAt: string;
   userId: string;
   routeId: string | null;
-  rating: number;
+  averageRating: string;
   ratingCount: number;
   viewCount: number;
+  images: DecorationPicture[];
+  ratings: Rating[];
+  favourites: Favourite[];
 }
 
 export interface DecorationImage {

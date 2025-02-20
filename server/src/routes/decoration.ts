@@ -163,9 +163,16 @@ decorationRouter.get("getDecoration", async (c) => {
           ...getOptimizedImageUrls(image.publicId),
         }));
 
+        const ratings = await db
+          .select()
+          .from(Rating)
+          .where(eq(Rating.decorationId, decorationId))
+          .execute();
+
         return {
           ...dec,
           images: optimizedImages,
+          ratings,
         };
       });
 

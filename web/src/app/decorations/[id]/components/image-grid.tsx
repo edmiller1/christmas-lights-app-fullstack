@@ -63,7 +63,7 @@ export const ImageGrid = ({ images, setShowImageOverlay }: Props) => {
           className="rounded-br-xl cursor-pointer object-cover"
           onClick={() => setShowImageOverlay(true)}
         />
-        <div className="absolute sm:bottom-48 sm:right-72 lg:right-[26%] xl:right-80 xl:bottom-36 z-[99]">
+        <div className="absolute md:bottom-32 md:right-24 lg:right-40 xl:right-60 xl:bottom-36 2xl:right-80 2xl:bottom-36 z-[99]">
           <Button variant="outline" onClick={() => setShowImageOverlay(true)}>
             <Grip className="mr-3 w-8 h-8" />
             Show all photos
@@ -110,7 +110,7 @@ export const ImageGrid = ({ images, setShowImageOverlay }: Props) => {
           />
         </>
       ) : null}
-      <div className="absolute sm:right-10 sm:bottom-52 md:right-20 md:bottom-56 lg:right-36 lg:bottom-60 xl:right-60 xl:bottom-60 2xl:right-80 2xl:bottom-56 z-10">
+      <div className="absolute md:bottom-32 md:right-24 lg:right-40 xl:right-60 xl:bottom-36 2xl:right-80 2xl:bottom-36 z-[99]">
         <Button variant="outline" onClick={() => setShowImageOverlay(true)}>
           <Grip size={28} className="mr-3 w-8 h-8" />
           Show all photos

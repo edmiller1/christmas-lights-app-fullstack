@@ -11,6 +11,8 @@ import { User } from "@/lib/types";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { RateDecorationDialog } from "./rate-decoration-dialog";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface Props {
   user: User | null;
@@ -18,6 +20,7 @@ interface Props {
 }
 
 export const RateButton = ({ decorationId, user }: Props) => {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const router = useRouter();
 
   const renderToast = () => {
@@ -32,6 +35,56 @@ export const RateButton = ({ decorationId, user }: Props) => {
     });
   };
 
+  if (isDesktop) {
+    return (
+      <>
+        {user ? (
+          <>
+            {user.ratings.some(
+              (userRating) => userRating.decorationId === decorationId
+            ) ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <RateDecorationDialog
+                      userRating={user.ratings.find(
+                        (r) => r.decorationId === decorationId
+                      )}
+                    />
+                  </TooltipTrigger>
+                  {user.ratings.find((r) => r.decorationId === decorationId) ? (
+                    <TooltipContent>
+                      <p>
+                        Your rating: $
+                        {
+                          user.ratings.find(
+                            (r) => r.decorationId === decorationId
+                          )?.rating
+                        }{" "}
+                        stars
+                      </p>
+                    </TooltipContent>
+                  ) : null}
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <RateDecorationDialog
+                userRating={user.ratings.find(
+                  (r) => r.decorationId === decorationId
+                )}
+              />
+            )}
+          </>
+        ) : (
+          <Button variant="ghost" onClick={renderToast}>
+            <Star className="w-4 h-4" />
+            Rate
+          </Button>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       {user ? (
@@ -42,10 +95,11 @@ export const RateButton = ({ decorationId, user }: Props) => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost">
-                    <Star className="w-4 h-4" fill="#facd14" stroke="#facd14" />
-                    Rate
-                  </Button>
+                  <RateDecorationDialog
+                    userRating={user.ratings.find(
+                      (r) => r.decorationId === decorationId
+                    )}
+                  />
                 </TooltipTrigger>
                 {user.ratings.find((r) => r.decorationId === decorationId) ? (
                   <TooltipContent>
@@ -63,16 +117,16 @@ export const RateButton = ({ decorationId, user }: Props) => {
               </Tooltip>
             </TooltipProvider>
           ) : (
-            <Button variant="ghost">
-              <Star className="w-4 h-4" />
-              Rate
-            </Button>
+            <RateDecorationDialog
+              userRating={user.ratings.find(
+                (r) => r.decorationId === decorationId
+              )}
+            />
           )}
         </>
       ) : (
         <Button variant="ghost" onClick={renderToast}>
           <Star className="w-4 h-4" />
-          Rate
         </Button>
       )}
     </>

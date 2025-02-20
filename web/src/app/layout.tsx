@@ -38,7 +38,7 @@ export default function RootLayout({
             <CreateDecoration />
           </Providers>
           <UserLocation />
-          <Toaster />
+          <Toaster richColors />
         </ThemeProvider>
       </body>
     </html>

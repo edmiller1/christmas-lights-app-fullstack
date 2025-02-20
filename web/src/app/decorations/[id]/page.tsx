@@ -3,7 +3,6 @@
 import { api } from "@/api";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { DecorationLoading } from "./components/decoration-loading";
 import { ChevronLeft, Star } from "lucide-react";
 import { MapPin, Eye } from "@phosphor-icons/react";
 import { useUser } from "@/hooks/useUser";
@@ -19,13 +18,19 @@ import { SaveButton } from "./components/save-button";
 import { ShareButton } from "./components/share-button";
 import { VerifiedBadge } from "./components/verified-badge";
 import Map, { GeolocateControl, Marker, NavigationControl } from "react-map-gl";
+import christmasLoader from "../../../lottie/christmas-loader.json";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Button } from "@/components/ui/button";
 import { MobileImages } from "./components/mobile-images";
 import { Footer } from "@/components/footer";
+import { ViewRatingsDialog } from "./components/view-ratings-dialog";
+import { LottieAnimation } from "@/components/lottie-animation";
+import { NotFound } from "@/components/not-found";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const DecorationPage = () => {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const { user } = useUser();
   const params = useParams();
 
@@ -52,11 +57,127 @@ const DecorationPage = () => {
   }
 
   if (getDecorationLoading) {
-    return <DecorationLoading />;
+    return (
+      <div className="min-h-screen md:min-h-[90vh] flex justify-center items-center">
+        <LottieAnimation animationData={christmasLoader} autoplay loop />
+      </div>
+    );
   }
 
   if (!decoration) {
-    return <div>Decoration not found</div>;
+    return <NotFound />;
+  }
+
+  if (isDesktop) {
+    return (
+      <>
+        {showImageCarousel && (
+          <ImageCarousel
+            images={decoration.images}
+            setShowImageCarousel={setShowImageCarousel}
+            setShowImageOverlay={setShowImageOverlay}
+          />
+        )}
+        {showImageOverlay && (
+          <ImagesOverlay
+            images={decoration.images}
+            setShowImageOverlay={setShowImageOverlay}
+            setShowImageCarousel={setShowImageCarousel}
+          />
+        )}
+        <div className="flex flex-col pt-20 md:mx-16 lg:mx-32 xl:mx-52 2xl:mx-72">
+          <div className="flex items-center space-x-2">
+            <h1 className="text-3xl font-extrabold">{decoration.name}</h1>
+            <VerifiedBadge verified={decoration.verified} />
+          </div>
+          <div className="flex items-center justify-between my-2 text-sm font-semibold">
+            <div className="flex">
+              <div className="flex items-center">
+                <Star className="h-4 w-4 mr-1" fill="currentColor" />
+                &nbsp;
+                <span>
+                  {decoration.averageRating === "0"
+                    ? "New"
+                    : Number(decoration.averageRating).toFixed(1)}
+                </span>
+                {decoration.ratingCount > 0 && (
+                  <>
+                    &nbsp; &middot; &nbsp;
+                    <ViewRatingsDialog
+                      averageRating={Number(decoration.averageRating)}
+                      numRatings={decoration.ratingCount}
+                      ratings={decoration.ratings}
+                    />
+                  </>
+                )}
+              </div>
+              <span className="mx-2">|</span>
+              <div className="flex items-center font-semibold ">
+                &nbsp;<span>{decoration.viewCount}</span>&nbsp; views
+              </div>
+              <span className="mx-2">|</span>
+              <span className="font-semibold ">
+                {decoration.city}, {decoration.country}
+              </span>
+            </div>
+            {user && user.id === decoration.userId ? (
+              <div className="flex space-x-2">
+                <VerifiedAlert
+                  decorationId={decoration.id}
+                  verificationSubmitted={decoration.verificationSubmitted}
+                  verified={decoration.verified}
+                />
+                <DecorationUserMenu />
+              </div>
+            ) : (
+              <DecorationMenu />
+            )}
+          </div>
+          <ImageGrid
+            images={decoration.images}
+            setShowImageOverlay={setShowImageOverlay}
+          />
+          <div className="flex justify-end mt-2">
+            <RateButton decorationId={decoration.id} user={user} />
+            <SaveButton decorationId={decoration.id} user={user} />
+            <ShareButton decoration={decoration} />
+          </div>
+          <div className="mx-2 mt-5">
+            <h2 className="text-2xl font-bold">Location</h2>
+            <div className="flex items-center w-2/3">
+              <h3 className="mr-2 text-base text-secondary text-gray-600 dark:text-zinc-300">
+                {decoration.address}
+              </h3>
+            </div>
+            <div className="w-full h-[28rem] my-5 rounded-lg">
+              <Map
+                mapboxAccessToken={mapBoxToken}
+                initialViewState={{
+                  latitude: decoration.latitude,
+                  longitude: decoration.longitude,
+                  zoom: 15,
+                }}
+                maxZoom={20}
+                minZoom={3}
+                mapStyle="mapbox://styles/mapbox/streets-v12"
+                style={{ borderRadius: "10px" }}
+              >
+                <GeolocateControl />
+                <NavigationControl />
+                <Marker
+                  latitude={decoration.latitude}
+                  longitude={decoration.longitude}
+                  anchor="bottom"
+                >
+                  <MapPin size={32} weight="fill" color="#db2626" />
+                </Marker>
+              </Map>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
   }
 
   return (
@@ -75,14 +196,15 @@ const DecorationPage = () => {
           setShowImageCarousel={setShowImageCarousel}
         />
       )}
-      <div className="flex flex-col overflow-y-auto md:hidden">
+      <div className="flex flex-col overflow-y-auto">
         <div className="h-16 flex justify-between items-center border-b">
-          <Button variant="ghost">
+          <Button variant="ghost" className="ml-2">
             <ChevronLeft className="h-12 w-12" />
           </Button>
           <div>
-            <ShareButton />
+            <ShareButton decoration={decoration} />
             <SaveButton decorationId={decoration.id} user={user} />
+            <RateButton decorationId={decoration.id} user={user} />
           </div>
         </div>
         <MobileImages
@@ -179,103 +301,15 @@ const DecorationPage = () => {
           </div>
         </div>
         <Footer />
-      </div>
-      <div className="fixed bg-background px-6 shadow w-full h-[80px] bottom-0 left-0 right-0 z-50 flex justify-between items-center">
-        <Button variant="secondary" size="lg">
-          Edit
-        </Button>
-        <Button size="lg">Delete</Button>
-      </div>
-
-      <div className="hidden md:flex flex-col pt-20 md:mx-16 lg:mx-32 xl:mx-52 2xl:mx-72">
-        <div className="flex items-center space-x-2">
-          <h1 className="text-3xl font-extrabold">{decoration.name}</h1>
-          <VerifiedBadge verified={decoration.verified} />
-        </div>
-        <div className="flex items-center justify-between my-2 text-sm font-semibold">
-          <div className="flex">
-            <div className="flex items-center">
-              <Star className="h-4 w-4 mr-1" fill="currentColor" />
-              &nbsp;
-              <span>
-                {decoration.averageRating === "0"
-                  ? "New"
-                  : Number(decoration.averageRating).toFixed(1)}
-              </span>
-              {decoration.ratingCount > 0 && (
-                <>
-                  &nbsp; &middot; &nbsp;
-                  <span className="font-semibold underline cursor-pointer">
-                    {decoration.ratingCount === 1 ? "rating" : "ratings"}
-                  </span>
-                </>
-              )}
-            </div>
-            <span className="mx-2">|</span>
-            <div className="flex items-center font-semibold ">
-              &nbsp;<span>{decoration.viewCount}</span>&nbsp; views
-            </div>
-            <span className="mx-2">|</span>
-            <span className="font-semibold ">
-              {decoration.city}, {decoration.country}
-            </span>
+        {decoration.userId === user?.id && (
+          <div className="fixed bg-background px-6 shadow w-full h-[80px] bottom-0 left-0 right-0 z-50 flex justify-between items-center">
+            <Button variant="secondary" size="lg">
+              Edit
+            </Button>
+            <Button size="lg">Delete</Button>
           </div>
-          {user && user.id === decoration.userId ? (
-            <div className="flex space-x-2">
-              <VerifiedAlert
-                decorationId={decoration.id}
-                verificationSubmitted={decoration.verificationSubmitted}
-                verified={decoration.verified}
-              />
-              <DecorationUserMenu />
-            </div>
-          ) : (
-            <DecorationMenu />
-          )}
-        </div>
-        <ImageGrid
-          images={decoration.images}
-          setShowImageOverlay={setShowImageOverlay}
-        />
-        <div className="flex justify-end mt-2">
-          <RateButton decorationId={decoration.id} user={user} />
-          <SaveButton decorationId={decoration.id} user={user} />
-          <ShareButton />
-        </div>
-        <div className="mx-2 mt-5">
-          <h2 className="text-2xl font-bold">Location</h2>
-          <div className="flex items-center w-2/3">
-            <h3 className="mr-2 text-base text-secondary text-gray-600 dark:text-zinc-300">
-              {decoration.address}
-            </h3>
-          </div>
-          <div className="w-full h-[28rem] my-5 rounded-lg">
-            <Map
-              mapboxAccessToken={mapBoxToken}
-              initialViewState={{
-                latitude: decoration.latitude,
-                longitude: decoration.longitude,
-                zoom: 15,
-              }}
-              maxZoom={20}
-              minZoom={3}
-              mapStyle="mapbox://styles/mapbox/streets-v12"
-              style={{ borderRadius: "10px" }}
-            >
-              <GeolocateControl />
-              <NavigationControl />
-              <Marker
-                latitude={decoration.latitude}
-                longitude={decoration.longitude}
-                anchor="bottom"
-              >
-                <MapPin size={32} weight="fill" color="#db2626" />
-              </Marker>
-            </Map>
-          </div>
-        </div>
+        )}
       </div>
-      <Footer />
     </>
   );
 };

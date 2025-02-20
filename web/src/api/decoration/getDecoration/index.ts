@@ -1,11 +1,12 @@
 import { publicAxios } from "@/lib/axios";
-import { Decoration, DecorationPicture } from "@/lib/types";
+import { Decoration, DecorationPicture, Rating } from "@/lib/types";
 
 interface DecorationResponse extends Decoration {
   averageRating: string;
   images: DecorationPicture[];
   ratingCount: number;
   viewCount: number;
+  ratings: Rating[];
 }
 
 export const getDecoration = async (decorationId: string) => {
