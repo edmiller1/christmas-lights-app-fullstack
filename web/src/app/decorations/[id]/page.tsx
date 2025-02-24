@@ -1,10 +1,9 @@
 "use client";
 
-import { api } from "@/api";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { ChevronLeft, Star } from "lucide-react";
-import { MapPin, Eye } from "@phosphor-icons/react";
+import { Eye } from "@phosphor-icons/react";
 import { useUser } from "@/hooks/useUser";
 import { VerifiedAlert } from "./components/verified-alert";
 import { DecorationUserMenu } from "./components/decoration-user-menu";
@@ -17,7 +16,6 @@ import { RateButton } from "./components/rate-button";
 import { SaveButton } from "./components/save-button";
 import { ShareButton } from "./components/share-button";
 import { VerifiedBadge } from "./components/verified-badge";
-import Map, { GeolocateControl, Marker, NavigationControl } from "react-map-gl";
 import christmasLoader from "../../../lottie/christmas-loader.json";
 
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -28,15 +26,19 @@ import { ViewRatingsDialog } from "./components/view-ratings-dialog";
 import { LottieAnimation } from "@/components/lottie-animation";
 import { NotFound } from "@/components/not-found";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { DecorationPicture } from "@/lib/types";
+import { getDecoration } from "@/api/decoration";
+import { EditDecoration } from "@/components/edit-decoration/edit-decoration";
+import useStore from "@/store/useStore";
+import { DecorationMap } from "./components/decoration-map";
 
 const DecorationPage = () => {
+  const { setEditDialogOpen } = useStore((state) => state);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const { user } = useUser();
   const params = useParams();
 
   const id = params.id as string;
-
-  const mapBoxToken = process.env.NEXT_PUBLIC_MAPBOX_API_KEY as string;
 
   const [showImageOverlay, setShowImageOverlay] = useState<boolean>(false);
   const [showImageCarousel, setShowImageCarousel] = useState<boolean>(false);
@@ -47,9 +49,7 @@ const DecorationPage = () => {
     error: getDecorationError,
   } = useQuery({
     queryKey: ["get-decoration"],
-    queryFn: async () => {
-      return api.decoration.getDecoration(id);
-    },
+    queryFn: async () => getDecoration(id),
   });
 
   if (getDecorationError) {
@@ -71,6 +71,12 @@ const DecorationPage = () => {
   if (isDesktop) {
     return (
       <>
+        <EditDecoration
+          establishedImages={decoration.images}
+          decorationName={decoration.name}
+          decorationAddress={decoration.address}
+          decorationId={decoration.id}
+        />
         {showImageCarousel && (
           <ImageCarousel
             images={decoration.images}
@@ -100,16 +106,12 @@ const DecorationPage = () => {
                     ? "New"
                     : Number(decoration.averageRating).toFixed(1)}
                 </span>
-                {decoration.ratingCount > 0 && (
-                  <>
-                    &nbsp; &middot; &nbsp;
-                    <ViewRatingsDialog
-                      averageRating={Number(decoration.averageRating)}
-                      numRatings={decoration.ratingCount}
-                      ratings={decoration.ratings}
-                    />
-                  </>
-                )}
+                &nbsp; &middot; &nbsp;
+                <ViewRatingsDialog
+                  averageRating={Number(decoration.averageRating)}
+                  numRatings={decoration.ratingCount}
+                  ratings={decoration.ratings}
+                />
               </div>
               <span className="mx-2">|</span>
               <div className="flex items-center font-semibold ">
@@ -127,7 +129,7 @@ const DecorationPage = () => {
                   verificationSubmitted={decoration.verificationSubmitted}
                   verified={decoration.verified}
                 />
-                <DecorationUserMenu />
+                <DecorationUserMenu setEditDialogOpen={setEditDialogOpen} />
               </div>
             ) : (
               <DecorationMenu />
@@ -138,7 +140,9 @@ const DecorationPage = () => {
             setShowImageOverlay={setShowImageOverlay}
           />
           <div className="flex justify-end mt-2">
-            <RateButton decorationId={decoration.id} user={user} />
+            {decoration.userId !== user?.id && (
+              <RateButton decorationId={decoration.id} user={user} />
+            )}
             <SaveButton decorationId={decoration.id} user={user} />
             <ShareButton decoration={decoration} />
           </div>
@@ -150,28 +154,10 @@ const DecorationPage = () => {
               </h3>
             </div>
             <div className="w-full h-[28rem] my-5 rounded-lg">
-              <Map
-                mapboxAccessToken={mapBoxToken}
-                initialViewState={{
-                  latitude: decoration.latitude,
-                  longitude: decoration.longitude,
-                  zoom: 15,
-                }}
-                maxZoom={20}
-                minZoom={3}
-                mapStyle="mapbox://styles/mapbox/streets-v12"
-                style={{ borderRadius: "10px" }}
-              >
-                <GeolocateControl />
-                <NavigationControl />
-                <Marker
-                  latitude={decoration.latitude}
-                  longitude={decoration.longitude}
-                  anchor="bottom"
-                >
-                  <MapPin size={32} weight="fill" color="#db2626" />
-                </Marker>
-              </Map>
+              <DecorationMap
+                latitude={decoration.latitude}
+                longitude={decoration.longitude}
+              />
             </div>
           </div>
         </div>
@@ -182,6 +168,12 @@ const DecorationPage = () => {
 
   return (
     <>
+      <EditDecoration
+        establishedImages={decoration.images}
+        decorationName={decoration.name}
+        decorationAddress={decoration.address}
+        decorationId={decoration.id}
+      />
       {showImageCarousel && (
         <ImageCarousel
           images={decoration.images}
@@ -204,11 +196,15 @@ const DecorationPage = () => {
           <div>
             <ShareButton decoration={decoration} />
             <SaveButton decorationId={decoration.id} user={user} />
-            <RateButton decorationId={decoration.id} user={user} />
+            {decoration.userId !== user?.id && (
+              <RateButton decorationId={decoration.id} user={user} />
+            )}
           </div>
         </div>
         <MobileImages
-          images={decoration.images.sort((a, b) => a.index - b.index)}
+          images={decoration.images.sort(
+            (a: DecorationPicture, b: DecorationPicture) => a.index - b.index
+          )}
           setShowImageOverlay={setShowImageOverlay}
         />
         <div className="p-4">
@@ -261,49 +257,28 @@ const DecorationPage = () => {
               <Eye size={16} weight="fill" />
             </div>
             <div className="w-1/4 flex items-center justify-center font-bold">
-              {decoration.ratingCount > 0 ? (
-                <div className="flex flex-col items-center">
-                  <span>{decoration.ratingCount}</span>
-                  <span className="font-semibold underline cursor-pointer">
-                    {decoration.ratingCount === 1 ? "rating" : "ratings"}
-                  </span>
-                </div>
-              ) : (
-                <span className="font-semibold underline cursor-pointer">
-                  No ratings
-                </span>
-              )}
+              <ViewRatingsDialog
+                averageRating={Number(decoration.averageRating)}
+                numRatings={decoration.ratingCount}
+                ratings={decoration.ratings}
+              />
             </div>
           </div>
           <div className="w-full h-64 my-5 rounded-lg">
-            <Map
-              mapboxAccessToken={mapBoxToken}
-              initialViewState={{
-                latitude: decoration.latitude,
-                longitude: decoration.longitude,
-                zoom: 16,
-              }}
-              maxZoom={20}
-              minZoom={3}
-              mapStyle="mapbox://styles/mapbox/streets-v12"
-              style={{ borderRadius: "10px" }}
-            >
-              <GeolocateControl />
-              <NavigationControl />
-              <Marker
-                latitude={decoration.latitude}
-                longitude={decoration.longitude}
-                anchor="bottom"
-              >
-                <MapPin size={32} weight="fill" color="#db2626" />
-              </Marker>
-            </Map>
+            <DecorationMap
+              latitude={decoration.latitude}
+              longitude={decoration.longitude}
+            />
           </div>
         </div>
         <Footer />
         {decoration.userId === user?.id && (
           <div className="fixed bg-background px-6 shadow w-full h-[80px] bottom-0 left-0 right-0 z-50 flex justify-between items-center">
-            <Button variant="secondary" size="lg">
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={() => setEditDialogOpen(true)}
+            >
               Edit
             </Button>
             <Button size="lg">Delete</Button>

@@ -10,8 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { ThemeChange } from "@/app/dashboard/components/theme-change";
+import { useSignOut } from "@/hooks/use-signout";
+import { Loader2 } from "lucide-react";
 
 interface Props {
   user: User;
@@ -19,14 +20,11 @@ interface Props {
 
 export const UserMenu = ({ user }: Props) => {
   const router = useRouter();
-  const supabase = createClient();
+  const { signOut, isLoading } = useSignOut();
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error);
-    }
-  };
+  if (isLoading) {
+    return <Loader2 className="w-4 h-4 animate-spin" />;
+  }
 
   return (
     <DropdownMenu>

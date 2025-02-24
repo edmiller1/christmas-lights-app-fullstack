@@ -9,12 +9,14 @@ import { CreateButton } from "../create-decoration/create-button";
 import { NotificationMenu } from "../notification-menu";
 import { useUser } from "@/hooks/useUser";
 import { UserMenu } from "./user-menu";
+import { usePathname } from "next/navigation";
 
 interface Props {
   className?: string;
 }
 
 export const Navbar = ({ className }: Props) => {
+  const pathname = usePathname();
   const { user } = useUser();
   return (
     <nav className={`border-b ${className}`}>
@@ -56,7 +58,11 @@ export const Navbar = ({ className }: Props) => {
               <NotificationMenu />
               <UserMenu user={user} />
             </>
-          ) : null}
+          ) : (
+            <Link href={`/sign-in?callbackUrl=${pathname}`}>
+              <Button variant="outline">Sign in</Button>
+            </Link>
+          )}
         </div>
       </div>
     </nav>

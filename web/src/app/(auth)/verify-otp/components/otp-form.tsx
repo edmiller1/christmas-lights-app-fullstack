@@ -6,7 +6,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { set, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
   Form,
@@ -18,12 +18,10 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import config from "@/config";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/api";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { getDatabaseSyncStatus } from "@/api/auth";
 
 const FormSchema = z.object({
   pin: z
@@ -69,7 +67,7 @@ export const OTPForm = ({ searchParams }: Props) => {
       );
       setOtpLoading(false);
     } else {
-      const response = await api.auth.getDatabaseSyncStatus(
+      const response = await getDatabaseSyncStatus(
         session?.access_token as string
       );
 
@@ -112,7 +110,7 @@ export const OTPForm = ({ searchParams }: Props) => {
             .
           </p>
           <p>
-            Didn't get a code?{" "}
+            Didn&apos;t get a code?{" "}
             <span
               onClick={requestNewCode}
               role="button"

@@ -1,7 +1,4 @@
-import { createDecoration } from "./createDecoration";
-import { getDecoration } from "./getDecoration";
-
-export const decoration = {
-  createDecoration,
-  getDecoration,
-};
+export * from "./createDecoration";
+export * from "./getDecoration";
+export * from "./saveDecoration";
+export * from "./removeDecoration";

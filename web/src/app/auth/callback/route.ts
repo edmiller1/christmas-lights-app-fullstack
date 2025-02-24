@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { api } from "@/api";
+import { getDatabaseSyncStatus } from "@/api/auth";
 
 interface SyncResponse {
   isSynced: boolean;
@@ -11,6 +11,7 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/";
+  const redirectUrl = searchParams.get("callbackUrl") ?? "/dashboard" ?? next;
 
   if (!code) {
     return NextResponse.redirect(`${origin}/sign-in?error=true`);
@@ -28,15 +29,11 @@ export async function GET(request: Request) {
 
     // Sync user with database
     try {
-      const response = (await api.auth.getDatabaseSyncStatus(
-        data.session.access_token
-      )) as SyncResponse;
+      (await getDatabaseSyncStatus(data.session.access_token)) as SyncResponse;
 
       // Determine the redirect URL based on environment
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
-
-      const redirectUrl = response.isSynced ? response.redirectUrl : next;
 
       if (isLocalEnv) {
         return NextResponse.redirect(`${origin}${redirectUrl}`);

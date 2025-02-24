@@ -76,9 +76,6 @@ export const DecorationImage = pgTable("decoration_image", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   publicId: text("public_id").notNull(),
   url: text("url").notNull(),
-  thumbnailUrl: text("thumbnail_url").notNull(),
-  mediumUrl: text("medium_url").notNull(),
-  largeUrl: text("large_url").notNull(),
   index: t.integer().notNull(),
   decorationId: t
     .uuid()

@@ -7,7 +7,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EllipsisVertical } from "lucide-react";
 
-export const DecorationUserMenu = () => {
+interface Props {
+  setEditDialogOpen: (open: boolean) => void;
+}
+
+export const DecorationUserMenu = ({ setEditDialogOpen }: Props) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -17,7 +21,7 @@ export const DecorationUserMenu = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="z-10">
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
           <span>Edit</span>
         </DropdownMenuItem>
         <DropdownMenuItem>

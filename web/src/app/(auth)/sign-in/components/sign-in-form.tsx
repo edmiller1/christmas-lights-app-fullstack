@@ -28,6 +28,8 @@ export const SignInForm = ({ searchParams }: Props) => {
   const supabase = createClient();
   const router = useRouter();
 
+  const callbackUrl = searchParams.callbackUrl as string;
+
   const [email, setEmail] = useState<string>("");
   const [emailLoading, setEmailLoading] = useState<boolean>(false);
   const [emailSuccess, setEmailSuccess] = useState<boolean>(false);
@@ -61,7 +63,9 @@ export const SignInForm = ({ searchParams }: Props) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${config.domainName}/auth/callback`,
+        redirectTo: `${
+          config.domainName
+        }/auth/callback?callbackUrl=${encodeURIComponent(callbackUrl || "/")}`,
         queryParams: {
           access_type: "offline",
           prompt: "consent",

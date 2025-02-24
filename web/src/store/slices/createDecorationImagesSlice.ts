@@ -19,4 +19,4 @@ const createDecorationImagesSlice: StateCreator<DecorationImageSlice> = (
 });
 
 export default createDecorationImagesSlice;
-export type { DecorationImage, DecorationImageSlice };
+export type { DecorationImageSlice };

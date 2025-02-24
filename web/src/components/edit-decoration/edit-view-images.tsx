@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   closestCenter,
@@ -41,16 +41,33 @@ import { toast } from "sonner";
 import { generateUID, getFileBase64 } from "@/lib/helpers";
 import useStore from "@/store/useStore";
 import { ConfirmationDialog } from "../confirmation-dialog";
-import { SortableItem } from "./sortable-item";
+import { DecorationPicture, EditableImage } from "@/lib/types";
+import { EditSortableItem } from "./edit-sortable-item";
 
-export const ViewImages = () => {
-  const { decorationImages, setDecorationImages, increaseStep, decreaseStep } =
-    useStore((state) => state);
+interface Props {
+  establishedImages: DecorationPicture[];
+}
+
+export const EditViewImages = ({ establishedImages }: Props) => {
+  const {
+    decreaseEditStep,
+    increaseEditStep,
+    editedImages,
+    setEditedImages,
+    deletedImages,
+    setDeletedImages,
+  } = useStore((state) => state);
 
   const [openConfirmationDialog, setOpenConfirmationDialog] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
 
   const [api, setApi] = useState<CarouselApi>();
+
+  useEffect(() => {
+    if (editedImages.length === 0) {
+      setEditedImages([...establishedImages]);
+    }
+  }, [editedImages.length, setEditedImages, establishedImages]);
 
   const selectImage = (index: number) => {
     api?.scrollTo(index);
@@ -63,42 +80,49 @@ export const ViewImages = () => {
     if (!e.target.files) return;
 
     const files = Array.from(e.target.files);
+    console.log(files);
 
     // Process new images
     const newImages = await Promise.all(
       files.map(async (file, index) => {
-        const base64String = await getFileBase64(file);
+        const base64 = await getFileBase64(file);
         return {
           id: generateUID(),
-          url: URL.createObjectURL(file),
-          index: decorationImages.length + index, // Adjust index based on existing array length
-          base64Value: base64String,
+          url: base64,
+          index: editedImages.length + index,
         };
       })
     );
 
-    // Filter out any duplicates based on base64Value
-    const uniqueImages = newImages.filter(
-      (newImg) =>
-        !decorationImages.some(
-          (existingImg) => existingImg.base64Value === newImg.base64Value
-        )
-    );
+    // // Filter out any duplicates based on base64Value
+    // const uniqueImages = newImages.filter(
+    //   (newImg) =>
+    //     !editedImages.some(
+    //       (existingImg) => existingImg.base64Value === newImg.base64Value
+    //     )
+    // );
 
-    setDecorationImages([...decorationImages, ...uniqueImages]);
+    setEditedImages([...editedImages, ...newImages]);
   };
 
-  const handleDeleteClick = (imageId: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (image: EditableImage, e: React.MouseEvent) => {
     e.stopPropagation();
-    setImageToDelete(imageId);
+    if (image.publicId) {
+      setDeletedImages([...deletedImages, image.publicId]);
+    }
+    setImageToDelete(image.id);
     setOpenConfirmationDialog(true);
   };
 
   const deleteImage = () => {
     if (imageToDelete) {
-      setDecorationImages(
-        decorationImages.filter((img) => img.id !== imageToDelete)
-      );
+      const reindexedImages = editedImages
+        .filter((img) => img.id !== imageToDelete)
+        .map((img, index) => ({
+          ...img,
+          index,
+        }));
+      setEditedImages(reindexedImages);
       setImageToDelete(null);
     }
     setOpenConfirmationDialog(false);
@@ -116,14 +140,10 @@ export const ViewImages = () => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = decorationImages.findIndex(
-        (item) => item.id === active.id
-      );
-      const newIndex = decorationImages.findIndex(
-        (item) => item.id === over.id
-      );
+      const oldIndex = editedImages.findIndex((item) => item.id === active.id);
+      const newIndex = editedImages.findIndex((item) => item.id === over.id);
 
-      const reorderedImages = arrayMove(decorationImages, oldIndex, newIndex);
+      const reorderedImages = arrayMove(editedImages, oldIndex, newIndex);
 
       // Update indices to match new order
       const updatedImages = reorderedImages.map((image, index) => ({
@@ -131,7 +151,7 @@ export const ViewImages = () => {
         index,
       }));
 
-      setDecorationImages(updatedImages);
+      setEditedImages(updatedImages);
     }
   };
 
@@ -152,23 +172,32 @@ export const ViewImages = () => {
       </DialogHeader>
       <Carousel setApi={setApi}>
         <CarouselContent>
-          {decorationImages.map((image) => (
+          {editedImages.map((image) => (
             <CarouselItem key={image.id} className="relative">
               <button
-                onClick={(e) => handleDeleteClick(image.id, e)}
+                onClick={(e) => handleDeleteClick(image, e)}
                 className="absolute right-2 top-2 z-50 rounded-full bg-black px-1 py-1 opacity-80 animate-in hover:opacity-60"
               >
                 <X className="h-4 w-4 text-white" />
               </button>
-              <Image
-                src={image.url}
-                alt="Decoration"
-                width={400}
-                height={400}
-                className="max-h-[400px] w-full rounded-lg object-cover"
-                priority
-                blurDataURL={image.url}
-              />
+              {image.publicId ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={image.url}
+                  alt={image.id}
+                  className="max-h-[400px] w-full rounded-lg object-cover"
+                />
+              ) : (
+                <Image
+                  src={image.url}
+                  alt="Decoration"
+                  width={400}
+                  height={400}
+                  className="max-h-[400px] w-full rounded-lg object-cover"
+                  priority
+                  blurDataURL={image.url}
+                />
+              )}
             </CarouselItem>
           ))}
         </CarouselContent>
@@ -183,14 +212,13 @@ export const ViewImages = () => {
         <Carousel className="mt-2" opts={{ watchDrag: false }}>
           <CarouselContent>
             <SortableContext
-              items={decorationImages.map((img) => img.id)}
+              items={editedImages.map((img) => img.id)}
               strategy={horizontalListSortingStrategy}
             >
-              {decorationImages.map((image, index) => (
-                <SortableItem
+              {editedImages.map((image, index) => (
+                <EditSortableItem
                   key={image.id}
-                  id={image.id}
-                  url={image.url}
+                  image={image}
                   index={index}
                   selectImage={selectImage}
                   handleDeleteClick={handleDeleteClick}
@@ -217,10 +245,10 @@ export const ViewImages = () => {
       </DndContext>
       <DialogFooter>
         <div className="flex w-full items-center justify-between">
-          <Button variant="secondary" onClick={() => decreaseStep(2)}>
+          <Button variant="secondary" onClick={() => decreaseEditStep(1)}>
             Go back
           </Button>
-          <Button onClick={() => increaseStep(2)}>Next</Button>
+          <Button onClick={() => increaseEditStep(1)}>Next</Button>
         </div>
       </DialogFooter>
     </>

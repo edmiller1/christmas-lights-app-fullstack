@@ -1,13 +1,20 @@
 import { Hono } from "hono";
 import { db } from "../db";
 import { authMiddleware } from "../lib/middleware";
-import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { createDecorationSchema } from "../lib/schemas";
-import { Decoration, DecorationImage, Rating, User, View } from "../db/schema";
-import { eq, sql } from "drizzle-orm";
+import {
+  Decoration,
+  DecorationImage,
+  Favourite,
+  Rating,
+  User,
+  View,
+} from "../db/schema";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Cloudinary } from "../lib/cloudinary";
 import { getLocationData, getOptimizedImageUrls } from "../lib/helpers";
+import { UpdateDecorationArgs } from "./types";
 
 export const decorationRouter = new Hono();
 
@@ -36,9 +43,6 @@ decorationRouter.post(
       let uploadedImages: {
         publicId: string;
         url: string;
-        thumbnailUrl: string;
-        mediumUrl: string;
-        largeUrl: string;
         index: number;
       }[] = [];
 
@@ -49,9 +53,6 @@ decorationRouter.post(
           uploadedImages.push({
             publicId: uploadResponse.id,
             url: uploadResponse.url,
-            thumbnailUrl: uploadResponse.thumbnailUrl,
-            mediumUrl: uploadResponse.mediumUrl,
-            largeUrl: uploadResponse.largeUrl,
             index: image.index as number,
           });
         }
@@ -191,6 +192,199 @@ decorationRouter.get("getDecoration", async (c) => {
       {
         error: "Database error",
         details: error.message,
+      },
+      500
+    );
+  }
+});
+
+decorationRouter.post("saveDecoration", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+    const decorationId = c.req.query("decorationId");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    if (!decorationId) {
+      return c.json({ error: "Decoration ID is required" }, 400);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    await db.insert(Favourite).values({
+      decorationId,
+      userId: user.id,
+    });
+
+    return c.json({ message: "Decoration saved" }, 200);
+  } catch (error) {
+    console.error("Error saving decoration:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+decorationRouter.post("removeDecoration", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+    const decorationId = c.req.query("decorationId");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    if (!decorationId) {
+      return c.json({ error: "Decoration ID is required" }, 400);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    await db
+      .delete(Favourite)
+      .where(
+        and(
+          eq(Favourite.decorationId, decorationId),
+          eq(Favourite.userId, user.id)
+        )
+      );
+
+    return c.json({ message: "Decoration removed" }, 200);
+  } catch (error) {
+    console.error("Error removing decoration:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+decorationRouter.put("updateDecoration", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+    if (!auth) return c.json({ error: "Not authenticated" }, 401);
+
+    const {
+      decorationId,
+      name,
+      address,
+      images,
+      deletedImageIds,
+      addressId,
+    }: UpdateDecorationArgs = await c.req.json();
+
+    // Validation
+    if (!decorationId || !name || !address || !images) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+    if (!user) return c.json({ error: "User not found" }, 404);
+
+    try {
+      await db.transaction(async (tx) => {
+        // 1. Basic decoration update
+        const decorationUpdate = {
+          name,
+          address,
+          updatedAt: new Date(),
+        } as const;
+
+        await tx
+          .update(Decoration)
+          .set(decorationUpdate)
+          .where(eq(Decoration.id, decorationId));
+
+        // 2. Update location if address changed
+        if (addressId) {
+          const locationData = await getLocationData(addressId);
+          await tx
+            .update(Decoration)
+            .set({
+              latitude: locationData.latitude,
+              longitude: locationData.longitude,
+              country: locationData.country,
+              region: locationData.region,
+              city: locationData.city,
+              updatedAt: new Date(),
+            })
+            .where(eq(Decoration.id, decorationId));
+        }
+
+        // 3. Handle image deletions
+        if (deletedImageIds?.length > 0) {
+          const imagesToDelete = await tx.query.DecorationImage.findMany({
+            where: inArray(DecorationImage.id, deletedImageIds),
+          });
+
+          await tx
+            .delete(DecorationImage)
+            .where(inArray(DecorationImage.id, deletedImageIds));
+
+          for (const image of imagesToDelete) {
+            await Cloudinary.destroy(image.publicId);
+          }
+        }
+
+        // 4. Handle new images
+        const newImages = images.filter((img) => img.base64Value);
+
+        if (newImages.length > 0) {
+          const uploadedImages = await Promise.all(
+            newImages.map(async (image) => {
+              const uploadResponse = await Cloudinary.upload(
+                image.base64Value!
+              );
+              return {
+                publicId: uploadResponse.id,
+                url: uploadResponse.url,
+                index: image.index,
+                decorationId,
+              };
+            })
+          );
+
+          await tx.insert(DecorationImage).values(uploadedImages);
+        }
+
+        // 5. Update existing image indices
+        const existingImages = images.filter((img) => img.publicId);
+
+        for (const image of existingImages) {
+          await tx
+            .update(DecorationImage)
+            .set({ index: image.index })
+            .where(
+              and(
+                eq(DecorationImage.publicId, String(image.publicId)),
+                eq(DecorationImage.decorationId, decorationId)
+              )
+            );
+        }
+      });
+
+      return c.json({ message: "Decoration updated successfully" }, 200);
+    } catch (txError) {
+      console.error("Transaction error:", txError);
+      throw txError;
+    }
+  } catch (error) {
+    console.error("Error updating decoration:", error);
+    return c.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error),
       },
       500
     );

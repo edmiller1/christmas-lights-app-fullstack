@@ -11,7 +11,7 @@ interface DecorationResponse extends Decoration {
 
 export const getDecoration = async (decorationId: string) => {
   const response = await publicAxios.get<DecorationResponse>(
-    `/api/decoration/getDecoration`,
+    "/api/decoration/getDecoration",
     {
       params: {
         decorationId,

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -29,34 +28,44 @@ import { MapboxSearchResponse, MapboxSuggestion } from "@/lib/types";
 import useStore from "@/store/useStore";
 import success from "../../lottie/success.json";
 import { LottieAnimation } from "../lottie-animation";
-import { useMutation } from "@tanstack/react-query";
-import { CreateDecorationArgs } from "@/api/decoration/createDecoration/types";
-import { createDecoration } from "@/api/decoration";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { UpdateDecorationArgs } from "@/api/decoration/updateDecoration/types";
+import { updateDecoration } from "@/api/decoration/updateDecoration";
 
-export const CreateForm = () => {
-  const router = useRouter();
-  const { decreaseStep, decorationImages } = useStore((state) => state);
+interface Props {
+  decorationName: string;
+  decorationAddress: string;
+  decorationId: string;
+}
 
-  const [decorationCreated, setDecorationCreated] = useState<boolean>(false);
+export const EditForm = ({
+  decorationName,
+  decorationAddress,
+  decorationId,
+}: Props) => {
+  const { decreaseEditStep, editedImages, deletedImages, setEditDialogOpen } =
+    useStore((state) => state);
+
+  const queryClient = useQueryClient();
+
+  const [decorationEdited, setDecorationEdited] = useState<boolean>(false);
   const [decorationLoading, setDecorationLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [suggestions, setSuggestions] = useState<unknown[]>([]);
   const [addressId, setAddressId] = useState<string>("");
 
   const { mutateAsync } = useMutation({
-    mutationFn: async (data: CreateDecorationArgs) => createDecoration(data),
-    onSuccess: (data) => {
-      setDecorationCreated(true);
-      toast.success("Decoration created successfully!");
-      setTimeout(() => {
-        // Navigate to the new decoration
-        router.push(`/decorations/${data.decorationId}`);
-      }, 2000);
+    mutationFn: async (data: UpdateDecorationArgs) => updateDecoration(data),
+    onSuccess: () => {
+      setDecorationEdited(true);
+      toast.success("Decoration updated successfully!");
+      setEditDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["get-decoration"] });
+      decreaseEditStep(2);
     },
-    onError: (error) => {
+    onError: () => {
       setDecorationLoading(false);
-      setDecorationCreated(false);
-      toast.error("Failed to create decoration, Please try again. " + error);
+      toast.error("Failed to update decoration, Please try again.");
     },
   });
 
@@ -68,8 +77,8 @@ export const CreateForm = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      address: "",
+      name: decorationName,
+      address: decorationAddress,
     },
   });
 
@@ -95,15 +104,14 @@ export const CreateForm = () => {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     setDecorationLoading(true);
-    values.address = searchQuery;
+    values.address = searchQuery ? searchQuery : values.address;
 
     const decorationData = {
+      decorationId: decorationId,
       name: values.name,
       address: values.address,
-      images: decorationImages.map((img) => ({
-        index: img.index,
-        base64Value: img.base64Value,
-      })),
+      images: editedImages,
+      deletedImageIds: deletedImages,
       addressId,
     };
 
@@ -111,7 +119,7 @@ export const CreateForm = () => {
       mutateAsync(decorationData);
     } catch (error) {
       setDecorationLoading(false);
-      console.error("Failed to create decoration:", error);
+      console.error("Failed to update decoration:", error);
     }
   };
 
@@ -131,11 +139,11 @@ export const CreateForm = () => {
     }
   }, [searchQuery]);
 
-  if (decorationCreated) {
+  if (decorationEdited) {
     return (
       <>
         <DialogHeader>
-          <DialogTitle>Decoration Created Successfully</DialogTitle>
+          <DialogTitle>Decoration Edited Successfully</DialogTitle>
         </DialogHeader>
         <div className="flex h-64 items-center justify-center">
           <LottieAnimation
@@ -155,7 +163,7 @@ export const CreateForm = () => {
           <DialogHeader>
             <DialogTitle>Decoration Details</DialogTitle>
             <DialogDescription>
-              Add the name and address for your decoration
+              Update the name and address for your decoration
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -187,7 +195,7 @@ export const CreateForm = () => {
                           field.onChange(e.target.value);
                           handleAddressSearch(e);
                         }}
-                        value={searchQuery}
+                        value={searchQuery ? searchQuery : field.value}
                         placeholder="Start typing the address..."
                         autoComplete="off"
                       />
@@ -224,10 +232,14 @@ export const CreateForm = () => {
               </>
               <DialogFooter className="mt-8">
                 <div className="flex w-full items-center justify-between">
-                  <Button variant="secondary" onClick={() => decreaseStep(3)}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => decreaseEditStep(2)}
+                  >
                     Go back
                   </Button>
-                  <Button type="submit">Create</Button>
+                  <Button type="submit">Update</Button>
                 </div>
               </DialogFooter>
             </form>
@@ -236,7 +248,7 @@ export const CreateForm = () => {
       ) : (
         <>
           <DialogHeader>
-            <DialogTitle>Creating Decoration...</DialogTitle>
+            <DialogTitle>Updating Decoration...</DialogTitle>
           </DialogHeader>
           <div className="flex h-64 items-center justify-center">
             <LoaderCircle

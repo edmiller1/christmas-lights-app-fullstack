@@ -51,12 +51,18 @@ export interface DecorationImage {
 export interface DecorationPicture {
   id: string;
   index: number;
-  largeUrl: string;
-  mediumUrl: string;
-  thumbnailUrl: string;
   url: string;
   publicId: string;
   decorationId: string;
+}
+
+export interface EditableImage {
+  id: string;
+  index: number;
+  url: string;
+  publicId?: string;
+  decorationId?: string;
+  base64Value?: string;
 }
 
 export interface Notification {
