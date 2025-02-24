@@ -26,7 +26,9 @@ authRouter.get("/callback", authMiddleware, async (c, next) => {
       await db.insert(User).values({
         externalId: auth.id,
         email: auth.email!,
-        name: auth.user_metadata.full_name,
+        name: auth.user_metadata.full_name
+          ? auth.user_metadata.full_name
+          : auth.user_metadata.firstname + " " + auth.user_metadata.lastname,
         image: auth.user_metadata.avatar_url,
         admin: false,
         emailVerified: auth.user_metadata.email_verified,

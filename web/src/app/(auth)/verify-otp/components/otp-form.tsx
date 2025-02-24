@@ -3,6 +3,7 @@
 import {
   InputOTP,
   InputOTPGroup,
+  InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -101,7 +102,6 @@ export const OTPForm = ({ searchParams }: Props) => {
         </div>
       ) : (
         <>
-          {" "}
           <p>
             Enter the 6-digit sent to{" "}
             <span className="font-bold text-black dark:text-white">
@@ -138,6 +138,7 @@ export const OTPForm = ({ searchParams }: Props) => {
                               <InputOTPSlot index={0} />
                               <InputOTPSlot index={1} />
                               <InputOTPSlot index={2} />
+                              <InputOTPSeparator />
                               <InputOTPSlot index={3} />
                               <InputOTPSlot index={4} />
                               <InputOTPSlot index={5} />

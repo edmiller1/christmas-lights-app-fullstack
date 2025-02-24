@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { SignInForm } from "./components/sign-in-form";
 import { redirect } from "next/navigation";
+import { SignUpForm } from "./components/sign-up-form";
 
 interface Props {
   searchParams: {
@@ -8,9 +8,8 @@ interface Props {
   };
 }
 
-const SignInPage = async ({ searchParams }: Props) => {
+const SignUpPage = async ({ searchParams }: Props) => {
   const params = await searchParams;
-
   const supabase = await createClient();
 
   const {
@@ -24,10 +23,10 @@ const SignInPage = async ({ searchParams }: Props) => {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <SignInForm searchParams={params} />
+        <SignUpForm searchParams={params} />
       </div>
     </div>
   );
 };
 
-export default SignInPage;
+export default SignUpPage;
