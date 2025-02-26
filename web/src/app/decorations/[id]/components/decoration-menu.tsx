@@ -7,7 +7,12 @@ import {
 import { EllipsisVertical } from "lucide-react";
 import { ReportDecorationDialog } from "./report-decoration-dialog";
 
-export const DecorationMenu = () => {
+interface Props {
+  decorationId: string;
+  decorationName: string;
+}
+
+export const DecorationMenu = ({ decorationId, decorationName }: Props) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -17,7 +22,10 @@ export const DecorationMenu = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <ReportDecorationDialog />
+        <ReportDecorationDialog
+          decorationId={decorationId}
+          decorationName={decorationName}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   );

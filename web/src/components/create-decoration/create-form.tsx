@@ -53,10 +53,12 @@ export const CreateForm = () => {
         router.push(`/decorations/${data.decorationId}`);
       }, 2000);
     },
-    onError: (error) => {
+    onError: (error: { response?: { data?: { error?: string } } }) => {
       setDecorationLoading(false);
       setDecorationCreated(false);
-      toast.error("Failed to create decoration, Please try again. " + error);
+      const errorMessage =
+        error?.response?.data?.error || "Failed to create decoration";
+      toast.error(errorMessage);
     },
   });
 

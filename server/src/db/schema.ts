@@ -127,7 +127,7 @@ export const Notification = pgTable("notification", (t) => ({
 export const Report = pgTable("report", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   reasons: t.text().notNull().array(),
-  additionalInfo: t.text().notNull(),
+  additionalInfo: t.text(),
   unresolved: t.boolean().default(false),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t
@@ -245,5 +245,16 @@ export const FavouriteRelations = relations(Favourite, ({ one }) => ({
   decoration: one(Decoration, {
     fields: [Favourite.decorationId],
     references: [Decoration.id],
+  }),
+}));
+
+export const ReportRelations = relations(Report, ({ one }) => ({
+  decoration: one(Decoration, {
+    fields: [Report.decorationId],
+    references: [Decoration.id],
+  }),
+  user: one(User, {
+    fields: [Report.userId],
+    references: [User.id],
   }),
 }));

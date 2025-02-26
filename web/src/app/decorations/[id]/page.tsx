@@ -122,18 +122,23 @@ const DecorationPage = () => {
                 {decoration.city}, {decoration.country}
               </span>
             </div>
-            {user && user.id === decoration.userId ? (
-              <div className="flex space-x-2">
-                <VerifiedAlert
+            {user ? (
+              user.id === decoration.userId ? (
+                <div className="flex space-x-2">
+                  <VerifiedAlert
+                    decorationId={decoration.id}
+                    verificationSubmitted={decoration.verificationSubmitted}
+                    verified={decoration.verified}
+                  />
+                  <DecorationUserMenu setEditDialogOpen={setEditDialogOpen} />
+                </div>
+              ) : (
+                <DecorationMenu
                   decorationId={decoration.id}
-                  verificationSubmitted={decoration.verificationSubmitted}
-                  verified={decoration.verified}
+                  decorationName={decoration.name}
                 />
-                <DecorationUserMenu setEditDialogOpen={setEditDialogOpen} />
-              </div>
-            ) : (
-              <DecorationMenu />
-            )}
+              )
+            ) : null}
           </div>
           <ImageGrid
             images={decoration.images}

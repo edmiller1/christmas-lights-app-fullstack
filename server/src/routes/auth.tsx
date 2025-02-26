@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { db } from "../db";
-import { Decoration, Favourite, Rating, User } from "../db/schema";
+import { Decoration, Favourite, Rating, Report, User } from "../db/schema";
 import { eq, sql } from "drizzle-orm";
 import { authMiddleware } from "../lib/middleware";
 import { SyncResponse } from "./types";
@@ -81,7 +81,7 @@ authRouter.get("/user", authMiddleware, async (c, next) => {
       .then(async ([person]) => {
         if (!person) return null;
 
-        const [ratings, favourites] = await Promise.all([
+        const [ratings, favourites, reports] = await Promise.all([
           db
             .select()
             .from(Rating)
@@ -92,12 +92,18 @@ authRouter.get("/user", authMiddleware, async (c, next) => {
             .from(Favourite)
             .where(eq(Favourite.userId, person.id))
             .execute(),
+          db
+            .select()
+            .from(Report)
+            .where(eq(Report.userId, person.id))
+            .execute(),
         ]);
 
         return {
           ...person,
           ratings,
           favourites,
+          reports,
         };
       });
 

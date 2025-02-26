@@ -2,6 +2,7 @@ import privateAxios from "@/lib/axios";
 
 interface SaveDecorationResponse {
   message: string;
+  error?: string;
 }
 
 export const saveDecoration = async (decorationId: string) => {
@@ -16,7 +17,7 @@ export const saveDecoration = async (decorationId: string) => {
   );
 
   if (response.status !== 200) {
-    throw new Error("Failed to save decoration");
+    throw new Error(response.data.error);
   }
 
   return response.data.message;

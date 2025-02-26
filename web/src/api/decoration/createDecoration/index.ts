@@ -8,7 +8,7 @@ export const createDecoration = async (data: CreateDecorationArgs) => {
   );
 
   if (response.status !== 200) {
-    throw new Error("Failed to create decoration, Please try again.");
+    throw new Error(response.data.error);
   }
 
   return response.data;

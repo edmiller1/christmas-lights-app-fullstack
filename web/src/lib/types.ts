@@ -16,6 +16,7 @@ export interface User {
   updatedAt: Date;
   ratings: Rating[];
   favourites: Favourite[];
+  reports: Report[];
 }
 
 export interface Decoration {
@@ -89,6 +90,15 @@ export interface Favourite {
   createdAt: string;
   decorationId: string;
   userId: string;
+}
+
+export interface Report {
+  id: string;
+  createdAt: string;
+  decorationId: string;
+  userId: string;
+  reasons: string[];
+  additionalInfo: string;
 }
 
 export interface MapboxSuggestion {

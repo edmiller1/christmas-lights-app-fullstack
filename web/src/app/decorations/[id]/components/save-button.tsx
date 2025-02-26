@@ -29,8 +29,10 @@ export const SaveButton = ({ decorationId, user }: Props) => {
         });
         toast.success("Decoration saved to favourites");
       },
-      onError: () => {
-        toast.error("Failed to save decoration. Please try again.");
+      onError: (error: { response?: { data?: { error?: string } } }) => {
+        const errorMessage =
+          error?.response?.data?.error || "Failed to save decoration";
+        toast.error(errorMessage);
       },
     });
 
@@ -43,8 +45,10 @@ export const SaveButton = ({ decorationId, user }: Props) => {
         });
         toast.success("Decoration removed from favourites");
       },
-      onError: () => {
-        toast.error("Failed to remove decoration. Please try again.");
+      onError: (error: { response?: { data?: { error?: string } } }) => {
+        const errorMessage =
+          error?.response?.data?.error || "Failed to remove decoration";
+        toast.error(errorMessage);
       },
     });
 

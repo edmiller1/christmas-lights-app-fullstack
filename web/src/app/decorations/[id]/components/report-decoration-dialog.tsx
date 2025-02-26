@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -25,7 +26,10 @@ import {
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TriangleAlert } from "lucide-react";
+import { Loader2, TriangleAlert } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { reportDecoration } from "@/api/decoration/reportDecoration";
+import { toast } from "sonner";
 
 const FormSchema = z.object({
   inappropriateName: z.boolean().default(false).optional(),
@@ -33,12 +37,36 @@ const FormSchema = z.object({
   moreDetails: z.string().optional(),
 });
 
-export const ReportDecorationDialog = () => {
+interface Props {
+  decorationId: string;
+  decorationName: string;
+}
+
+export const ReportDecorationDialog = ({
+  decorationId,
+  decorationName,
+}: Props) => {
+  const [open, setOpen] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<boolean>(false);
-  const [moreDetails, setMoreDetails] = useState<string | undefined>("");
-  const [inappropriateName, setInappropriateName] = useState<boolean>(false);
-  const [inappropriateImages, setInappropriateImages] =
-    useState<boolean>(false);
+
+  const { mutate: reportCurrentDecoration, isPending: isReporting } =
+    useMutation({
+      mutationFn: (data: { reasons: string[]; additionalInfo: string }) =>
+        reportDecoration({
+          decorationId,
+          reasons: data.reasons,
+          additionalInfo: data.additionalInfo,
+        }),
+      onSuccess: () => {
+        toast.success("Decoration reported successfully");
+        setOpen(false);
+      },
+      onError: (error: { response?: { data?: { error?: string } } }) => {
+        const errorMessage =
+          error?.response?.data?.error || "Failed to report decoration";
+        toast.error(errorMessage);
+      },
+    });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -50,21 +78,23 @@ export const ReportDecorationDialog = () => {
   });
 
   const onSubmit = (values: z.infer<typeof FormSchema>) => {
-    const options: string[] = [];
-
     if (!values.inappropriateName && !values.inappropriateImages) {
       setSubmitError(true);
-    } else if (values.inappropriateName) {
-      options.push("Inappropriate Name");
-    } else if (values.inappropriateImages) {
-      options.push("Inappropriate Images");
-    } else {
-      setSubmitError(false);
+      return;
     }
+
+    const reasons = [];
+    if (values.inappropriateName) reasons.push("INAPPROPRIATE_NAME");
+    if (values.inappropriateImages) reasons.push("INAPPROPRIATE_IMAGES");
+
+    reportCurrentDecoration({
+      reasons,
+      additionalInfo: values.moreDetails || "",
+    });
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <span>Report decoration</span>
@@ -73,27 +103,29 @@ export const ReportDecorationDialog = () => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Report Decoration</DialogTitle>
+          <DialogDescription>
+            You are reporting the decoration <strong>{decorationName}</strong>
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="inappropriateName"
-              render={() => (
+              render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={inappropriateName}
-                      onCheckedChange={(checked) => {
-                        setInappropriateName(checked as boolean);
-                      }}
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isReporting}
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Inappropriate Name</FormLabel>
                     <FormDescription>
-                      Decoration name that includes hateful, threatening
-                      content.
+                      Decoration name that includes hateful, threatening or
+                      sexual content.
                     </FormDescription>
                   </div>
                 </FormItem>
@@ -102,14 +134,13 @@ export const ReportDecorationDialog = () => {
             <FormField
               control={form.control}
               name="inappropriateImages"
-              render={() => (
+              render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={inappropriateImages}
-                      onCheckedChange={(checked) => {
-                        setInappropriateImages(checked as boolean);
-                      }}
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isReporting}
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
@@ -147,11 +178,7 @@ export const ReportDecorationDialog = () => {
                       placeholder="Provide more details..."
                       className="resize-none"
                       {...field}
-                      onChange={(e) => {
-                        field.onChange(e.target.value);
-                        setMoreDetails(e.target.value);
-                      }}
-                      value={moreDetails}
+                      disabled={isReporting}
                     />
                   </FormControl>
                   <FormDescription>
@@ -162,8 +189,19 @@ export const ReportDecorationDialog = () => {
                 </FormItem>
               )}
             />
-            <Button className="mt-5 float-right" type="submit">
-              Send Report
+            <Button
+              className="mt-5 float-right"
+              type="submit"
+              disabled={isReporting}
+            >
+              {isReporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                  <span>Sending report...</span>
+                </>
+              ) : (
+                "Send Report"
+              )}
             </Button>
           </form>
         </Form>

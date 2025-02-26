@@ -10,4 +10,5 @@ export interface CreateDecorationArgs {
 
 export interface createDecorationResponse {
   decorationId: string;
+  error?: string;
 }

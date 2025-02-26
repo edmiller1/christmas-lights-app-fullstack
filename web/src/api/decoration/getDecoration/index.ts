@@ -7,6 +7,7 @@ interface DecorationResponse extends Decoration {
   ratingCount: number;
   viewCount: number;
   ratings: Rating[];
+  error?: string;
 }
 
 export const getDecoration = async (decorationId: string) => {
@@ -19,8 +20,8 @@ export const getDecoration = async (decorationId: string) => {
     }
   );
 
-  if (!response.data) {
-    throw new Error("Failed to get decoration");
+  if (response.status !== 200) {
+    throw new Error(response.data.error);
   }
 
   return response.data;

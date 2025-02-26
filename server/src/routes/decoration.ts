@@ -7,16 +7,20 @@ import {
   Decoration,
   DecorationImage,
   Favourite,
+  Notification,
   Rating,
+  Report,
   User,
   View,
 } from "../db/schema";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { Cloudinary } from "../lib/cloudinary";
 import { getLocationData, getOptimizedImageUrls } from "../lib/helpers";
-import { UpdateDecorationArgs } from "./types";
+import { ReportDecorationArgs, UpdateDecorationArgs } from "./types";
+import { Resend } from "resend";
 
 export const decorationRouter = new Hono();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 decorationRouter.post(
   "/createDecoration",
@@ -388,5 +392,60 @@ decorationRouter.put("updateDecoration", authMiddleware, async (c) => {
       },
       500
     );
+  }
+});
+
+decorationRouter.post("reportDecoration", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+    const { decorationId, reasons, additionalInfo }: ReportDecorationArgs =
+      await c.req.json();
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    if (!decorationId || !reasons) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+      with: {
+        reports: true,
+      },
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    if (user.reports.some((report) => report.decorationId === decorationId)) {
+      return c.json(
+        { error: "You have already reported this decoration" },
+        400
+      );
+    }
+
+    await db.insert(Report).values({
+      decorationId,
+      reasons,
+      additionalInfo,
+      userId: user.id,
+    });
+
+    await db.insert(Notification).values({
+      userId: user.id,
+      content:
+        "Thanks for reporting this decoration. We will review it shortly.",
+      title: "Decoration Reported",
+    });
+
+    //TODO - send email to user
+
+    return c.json({ message: "Decoration reported successfully" }, 200);
+  } catch (error) {
+    console.error("Error reporting decoration:", error);
+    return c.json({ error: "Internal server error " + error }, 500);
   }
 });

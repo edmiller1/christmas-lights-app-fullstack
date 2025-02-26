@@ -30,3 +30,9 @@ export interface EditableImage {
   decorationId?: string;
   base64Value?: string;
 }
+
+export interface ReportDecorationArgs {
+  decorationId: string;
+  reasons: string[];
+  additionalInfo: string;
+}

@@ -63,9 +63,11 @@ export const EditForm = ({
       queryClient.invalidateQueries({ queryKey: ["get-decoration"] });
       decreaseEditStep(2);
     },
-    onError: () => {
+    onError: (error: { response?: { data?: { error?: string } } }) => {
       setDecorationLoading(false);
-      toast.error("Failed to update decoration, Please try again.");
+      const errorMessage =
+        error?.response?.data?.error || "Failed to update decoration";
+      toast.error(errorMessage);
     },
   });
 

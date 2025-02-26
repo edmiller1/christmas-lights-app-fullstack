@@ -43,6 +43,13 @@
       "when": 1740272221303,
       "tag": "0005_curly_madripoor",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1740475434470,
+      "tag": "0006_aromatic_susan_delgado",
+      "breakpoints": true
     }
   ]
 }

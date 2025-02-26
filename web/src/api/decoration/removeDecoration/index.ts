@@ -2,6 +2,7 @@ import privateAxios from "@/lib/axios";
 
 interface RemoveDecorationResponse {
   message: string;
+  error?: string;
 }
 
 export const removeDecoration = async (decorationId: string) => {
@@ -16,7 +17,7 @@ export const removeDecoration = async (decorationId: string) => {
   );
 
   if (response.status !== 200) {
-    throw new Error("Failed to remove decoration");
+    throw new Error(response.data.error);
   }
 
   return response.data.message;
