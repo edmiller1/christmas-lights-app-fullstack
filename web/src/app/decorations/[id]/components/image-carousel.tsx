@@ -31,9 +31,10 @@ export const ImageCarousel = ({
   const [api, setApi] = useState<CarouselApi>();
   const [mobileApi, setMobileApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
+  const [mobileCurrent, setMobileCurrent] = useState(0);
 
   useEffect(() => {
-    if (!api || !mobileApi) {
+    if (!api) {
       return;
     }
 
@@ -42,7 +43,19 @@ export const ImageCarousel = ({
     api.on("select", () => {
       setCurrent(api.selectedScrollSnap() + 1);
     });
-  }, [api, mobileApi]);
+  }, [api]);
+
+  useEffect(() => {
+    if (!mobileApi) {
+      return;
+    }
+
+    setMobileCurrent(mobileApi.selectedScrollSnap() + 1);
+
+    mobileApi.on("select", () => {
+      setMobileCurrent(mobileApi.selectedScrollSnap() + 1);
+    });
+  }, [mobileApi]);
 
   const closeOverlays = () => {
     setShowImageCarousel(false);
@@ -118,7 +131,7 @@ export const ImageCarousel = ({
           </Button>
 
           <span>
-            {current} / {images.length}
+            {mobileCurrent} / {images.length}
           </span>
           <div className="w-[15%]"></div>
         </div>

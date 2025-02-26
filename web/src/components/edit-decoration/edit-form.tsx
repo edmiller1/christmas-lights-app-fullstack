@@ -43,8 +43,14 @@ export const EditForm = ({
   decorationAddress,
   decorationId,
 }: Props) => {
-  const { decreaseEditStep, editedImages, deletedImages, setEditDialogOpen } =
-    useStore((state) => state);
+  const {
+    decreaseEditStep,
+    editedImages,
+    deletedImages,
+    setEditDialogOpen,
+    setEditedImages,
+    setDeletedImages,
+  } = useStore((state) => state);
 
   const queryClient = useQueryClient();
 
@@ -62,6 +68,8 @@ export const EditForm = ({
       setEditDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["get-decoration"] });
       decreaseEditStep(2);
+      setEditedImages([]);
+      setDeletedImages([]);
     },
     onError: (error: { response?: { data?: { error?: string } } }) => {
       setDecorationLoading(false);

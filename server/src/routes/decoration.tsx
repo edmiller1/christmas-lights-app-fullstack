@@ -348,14 +348,14 @@ decorationRouter.put("updateDecoration", authMiddleware, async (c) => {
         }
 
         // 4. Handle new images
-        const newImages = images.filter((img) => img.base64Value);
+        const newImages = images.filter((img) =>
+          img.url.includes("data:image")
+        );
 
         if (newImages.length > 0) {
           const uploadedImages = await Promise.all(
             newImages.map(async (image) => {
-              const uploadResponse = await Cloudinary.upload(
-                image.base64Value!
-              );
+              const uploadResponse = await Cloudinary.upload(image.url);
               return {
                 publicId: uploadResponse.id,
                 url: uploadResponse.url,

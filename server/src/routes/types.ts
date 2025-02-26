@@ -16,7 +16,7 @@ export interface UpdateDecorationArgs {
   images: Array<{
     id?: string;
     publicId?: string;
-    base64Value?: string;
+    url: string;
     index: number;
   }>;
   deletedImageIds: string[];
