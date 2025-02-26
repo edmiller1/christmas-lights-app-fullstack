@@ -198,7 +198,7 @@ const DecorationPage = () => {
           <Button variant="ghost" className="ml-2">
             <ChevronLeft className="h-12 w-12" />
           </Button>
-          <div>
+          <div className="pr-2">
             <ShareButton decoration={decoration} />
             <SaveButton decorationId={decoration.id} user={user} />
             {decoration.userId !== user?.id && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { rateDecoration } from "@/api/decoration/rateDecoration";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,24 +25,46 @@ import {
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Rating } from "@/lib/types";
 import { Star } from "@phosphor-icons/react";
+import { useMutation } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface Props {
+  decorationId: string;
   userRating: Rating | undefined;
 }
 
-export const RateDecorationDialog = ({ userRating }: Props) => {
+export const RateDecorationDialog = ({ decorationId, userRating }: Props) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [rating, setRating] = useState<number>(userRating?.rating || 0);
   const [hoveredRating, setHoveredRating] = useState<number>(0);
 
+  const { mutate: rate, isPending: ratingLoading } = useMutation({
+    mutationFn: () => rateDecoration({ decorationId, rating }),
+    onSuccess: () => {
+      if (userRating) {
+        toast.success("Decoration updated successfully");
+      } else {
+        toast.success("Decoration rated successfully");
+      }
+      setIsOpen(false);
+    },
+    onError: (error: { response?: { data?: { error?: string } } }) => {
+      const errorMessage =
+        error?.response?.data?.error || "Failed to rate decoration";
+      toast.error(errorMessage);
+    },
+  });
+
   if (isDesktop) {
     return (
-      <Dialog>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           {userRating ? (
             <Button variant="ghost">
-              <Star className="w-4 h-4" fill="#facd14" stroke="#facd14" />
+              <Star className="w-4 h-4 text-[#facd14]" weight="fill" />
               Rate
             </Button>
           ) : (
@@ -92,12 +115,21 @@ export const RateDecorationDialog = ({ userRating }: Props) => {
               <Button
                 variant="outline"
                 onClick={() => setRating(userRating?.rating || 0)}
+                disabled={ratingLoading}
               >
                 Cancel
               </Button>
             </DialogClose>
-            <Button variant="default" disabled={!rating}>
-              {userRating ? "Update" : "Rate"}
+            <Button
+              variant="default"
+              disabled={!rating || ratingLoading}
+              onClick={() => rate()}
+            >
+              {ratingLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>{userRating ? "Update" : "Rate"}</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -106,11 +138,11 @@ export const RateDecorationDialog = ({ userRating }: Props) => {
   }
 
   return (
-    <Drawer>
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
         {userRating ? (
           <Button variant="ghost">
-            <Star className="w-4 h-4" fill="#facd14" stroke="#facd14" />
+            <Star className="w-4 h-4 text-[#facd14]" weight="fill" />
           </Button>
         ) : (
           <Button variant="ghost">
@@ -151,10 +183,24 @@ export const RateDecorationDialog = ({ userRating }: Props) => {
         </div>
         <DrawerFooter>
           <DrawerClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button
+              variant="outline"
+              onClick={() => setRating(userRating?.rating || 0)}
+              disabled={ratingLoading}
+            >
+              Cancel
+            </Button>
           </DrawerClose>
-          <Button variant="default" disabled={!rating}>
-            {userRating ? "Update" : "Rate"}
+          <Button
+            variant="default"
+            disabled={!rating || ratingLoading}
+            onClick={() => rate()}
+          >
+            {ratingLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>{userRating ? "Update" : "Rate"}</>
+            )}
           </Button>
         </DrawerFooter>
       </DrawerContent>

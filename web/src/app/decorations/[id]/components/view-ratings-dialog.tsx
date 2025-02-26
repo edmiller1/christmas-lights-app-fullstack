@@ -90,7 +90,7 @@ export const ViewRatingsDialog = ({
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {numRatings} reviews
+                    {numRatings} ratings
                   </span>
                 </div>
                 <div className="flex flex-col mt-3 w-full space-y-2 px-3">
@@ -159,7 +159,7 @@ export const ViewRatingsDialog = ({
                   </span>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {numRatings} reviews
+                  {numRatings} ratings
                 </span>
               </div>
               <div className="flex flex-col mt-3 w-full space-y-2 px-3">

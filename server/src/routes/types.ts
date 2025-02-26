@@ -36,3 +36,8 @@ export interface ReportDecorationArgs {
   reasons: string[];
   additionalInfo: string;
 }
+
+export interface RateDecorationArgs {
+  decorationId: string;
+  rating: number;
+}

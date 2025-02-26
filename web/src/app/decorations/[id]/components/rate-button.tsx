@@ -35,6 +35,8 @@ export const RateButton = ({ decorationId, user }: Props) => {
     });
   };
 
+  const userRating = user?.ratings.find((r) => r.decorationId === decorationId);
+
   if (isDesktop) {
     return (
       <>
@@ -47,28 +49,18 @@ export const RateButton = ({ decorationId, user }: Props) => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <RateDecorationDialog
-                      userRating={user.ratings.find(
-                        (r) => r.decorationId === decorationId
-                      )}
+                      decorationId={decorationId}
+                      userRating={userRating}
                     />
                   </TooltipTrigger>
-                  {user.ratings.find((r) => r.decorationId === decorationId) ? (
-                    <TooltipContent>
-                      <p>
-                        Your rating: $
-                        {
-                          user.ratings.find(
-                            (r) => r.decorationId === decorationId
-                          )?.rating
-                        }{" "}
-                        stars
-                      </p>
-                    </TooltipContent>
-                  ) : null}
+                  <TooltipContent>
+                    <p>Your rating: {userRating?.rating} stars</p>
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             ) : (
               <RateDecorationDialog
+                decorationId={decorationId}
                 userRating={user.ratings.find(
                   (r) => r.decorationId === decorationId
                 )}
@@ -96,28 +88,18 @@ export const RateButton = ({ decorationId, user }: Props) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <RateDecorationDialog
-                    userRating={user.ratings.find(
-                      (r) => r.decorationId === decorationId
-                    )}
+                    decorationId={decorationId}
+                    userRating={userRating}
                   />
                 </TooltipTrigger>
-                {user.ratings.find((r) => r.decorationId === decorationId) ? (
-                  <TooltipContent>
-                    <p>
-                      Your rating: $
-                      {
-                        user.ratings.find(
-                          (r) => r.decorationId === decorationId
-                        )?.rating
-                      }{" "}
-                      stars
-                    </p>
-                  </TooltipContent>
-                ) : null}
+                <TooltipContent>
+                  <p>Your rating: {userRating?.rating} stars</p>
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           ) : (
             <RateDecorationDialog
+              decorationId={decorationId}
               userRating={user.ratings.find(
                 (r) => r.decorationId === decorationId
               )}
