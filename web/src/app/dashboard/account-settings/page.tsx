@@ -2,14 +2,14 @@
 
 import { useUser } from "@/hooks/useUser";
 
-const DashboardPage = () => {
+const AccountSettingsPage = () => {
   const { user } = useUser();
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">👋 Hi {user?.name}</h1>
+      <h1>Account Settings</h1>
     </div>
   );
 };
 
-export default DashboardPage;
+export default AccountSettingsPage;

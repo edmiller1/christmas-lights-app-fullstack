@@ -31,6 +31,7 @@ import { Resend } from "resend";
 import { ReportEmail } from "../emails/report";
 import NewRatingEmail from "../emails/newRating";
 import VerificationSubmissionEmail from "../emails/verificationSubmission";
+import { getViewCount, incrementViewCount } from "../lib/redis/viewTracker";
 
 export const decorationRouter = new Hono();
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -130,6 +131,9 @@ decorationRouter.post(
   }
 );
 
+/**
+ * Get decoration by ID
+ */
 decorationRouter.get("getDecoration", async (c) => {
   try {
     const decorationId = c.req.query("decorationId");
@@ -137,6 +141,11 @@ decorationRouter.get("getDecoration", async (c) => {
     if (!decorationId) {
       return c.json({ error: "Decoration ID is required" }, 400);
     }
+
+    // Increment the view asynchronously
+    incrementViewCount(decorationId).catch((err: any) => {
+      console.error("Failed to increment view count:", err);
+    });
 
     const decoration = await db
       .select({
@@ -170,6 +179,9 @@ decorationRouter.get("getDecoration", async (c) => {
       .then(async ([dec]) => {
         if (!dec) return null;
 
+        // Get view count from Redis for better performance
+        const viewCount = await getViewCount(decorationId);
+
         const images = await db
           .select()
           .from(DecorationImage)
@@ -190,6 +202,7 @@ decorationRouter.get("getDecoration", async (c) => {
 
         return {
           ...dec,
+          viewCount,
           images: optimizedImages,
           ratings,
         };
@@ -216,6 +229,9 @@ decorationRouter.get("getDecoration", async (c) => {
   }
 });
 
+/**
+ * Save decoration
+ */
 decorationRouter.post("saveDecoration", authMiddleware, async (c) => {
   try {
     const auth = c.get("user");
@@ -249,6 +265,9 @@ decorationRouter.post("saveDecoration", authMiddleware, async (c) => {
   }
 });
 
+/**
+ * Remove decoration
+ */
 decorationRouter.post("removeDecoration", authMiddleware, async (c) => {
   try {
     const auth = c.get("user");
@@ -286,6 +305,9 @@ decorationRouter.post("removeDecoration", authMiddleware, async (c) => {
   }
 });
 
+/**
+ * Update decoration
+ */
 decorationRouter.put("updateDecoration", authMiddleware, async (c) => {
   try {
     const auth = c.get("user");
@@ -409,6 +431,9 @@ decorationRouter.put("updateDecoration", authMiddleware, async (c) => {
   }
 });
 
+/**
+ * Report decoration
+ */
 decorationRouter.post("reportDecoration", authMiddleware, async (c) => {
   try {
     const auth = c.get("user");
@@ -481,6 +506,9 @@ decorationRouter.post("reportDecoration", authMiddleware, async (c) => {
   }
 });
 
+/**
+ * Rate decoration
+ */
 decorationRouter.post("rateDecoration", authMiddleware, async (c) => {
   try {
     const auth = c.get("user");
@@ -587,6 +615,9 @@ decorationRouter.post("rateDecoration", authMiddleware, async (c) => {
   }
 });
 
+/**
+ * Submit verification
+ */
 decorationRouter.post("submitVerification", authMiddleware, async (c) => {
   try {
     const auth = c.get("user");
@@ -642,6 +673,7 @@ decorationRouter.post("submitVerification", authMiddleware, async (c) => {
         document: verification.url,
         status: "pending",
         rejectedReason: null,
+        userId: user.id,
       })
       .returning({ id: Verification.id });
 

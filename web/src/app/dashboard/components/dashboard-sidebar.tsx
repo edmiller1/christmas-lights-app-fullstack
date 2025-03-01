@@ -1,6 +1,6 @@
 "use client";
 
-import { LucideIcon } from "lucide-react";
+import { BadgeCheck, LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,8 +17,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { UserMenu } from "./user-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useUser } from "@/hooks/useUser";
+import { User } from "@/lib/types";
 
 interface SidebarItem {
   href: string;
@@ -34,7 +33,14 @@ interface SidebarCategory {
 const sidebarItems: SidebarCategory[] = [
   {
     category: "Overview",
-    items: [{ href: "/dashboard", icon: Home, text: "Dashboard" }],
+    items: [
+      { href: "/dashboard", icon: Home, text: "Dashboard" },
+      {
+        href: "/dashboard/verifications",
+        icon: BadgeCheck,
+        text: "Verifications",
+      },
+    ],
   },
   {
     category: "Account",
@@ -52,34 +58,36 @@ const sidebarItems: SidebarCategory[] = [
   },
 ];
 
-export const DashboardSidebar = () => {
+interface Props {
+  user: User | null;
+}
+
+export const DashboardSidebar = ({ user }: Props) => {
   const pathname = usePathname();
 
-  const { user } = useUser();
-
-  if (!user) {
-    return (
-      <Sidebar>
-        <SidebarHeader>
-          <Skeleton className="w-full h-12" />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarMenu className="mt-5">
-              {Array.from([1, 2, 3]).map((_, index) => (
-                <div className="mb-4 md:mb-8" key={index}>
-                  <Skeleton className="w-full h-8" />
-                </div>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <Skeleton className="w-full h-20" />
-        </SidebarFooter>
-      </Sidebar>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <Sidebar>
+  //       <SidebarHeader>
+  //         <Skeleton className="w-full h-12" />
+  //       </SidebarHeader>
+  //       <SidebarContent>
+  //         <SidebarGroup>
+  //           <SidebarMenu className="mt-5">
+  //             {Array.from([1, 2, 3]).map((_, index) => (
+  //               <div className="mb-4 md:mb-8" key={index}>
+  //                 <Skeleton className="w-full h-8" />
+  //               </div>
+  //             ))}
+  //           </SidebarMenu>
+  //         </SidebarGroup>
+  //       </SidebarContent>
+  //       <SidebarFooter>
+  //         <Skeleton className="w-full h-20" />
+  //       </SidebarFooter>
+  //     </Sidebar>
+  //   );
+  // }
 
   return (
     <Sidebar>
@@ -111,7 +119,7 @@ export const DashboardSidebar = () => {
                         href={item.href}
                         className={cn(
                           buttonVariants({ variant: "ghost" }),
-                          "group flex w-full items-center justify-start gap-x-2.5 rounded-md px-2 py-1.5 text-sm font-medium leading-6",
+                          "group flex w-full items-center justify-start gap-x-2.5 rounded-md my-1 px-2 py-1.5 text-sm font-medium leading-6",
                           {
                             "bg-sidebar-accent text-sidebar-accent-foreground":
                               pathname === item.href,

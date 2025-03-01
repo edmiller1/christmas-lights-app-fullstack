@@ -81,34 +81,37 @@ authRouter.get("/user", authMiddleware, async (c, next) => {
       .then(async ([person]) => {
         if (!person) return null;
 
-        const [ratings, favourites, reports] = await Promise.all([
-          db
-            .select()
-            .from(Rating)
-            .where(eq(Rating.userId, person.id))
-            .execute(),
-          db
-            .select()
-            .from(Favourite)
-            .where(eq(Favourite.userId, person.id))
-            .execute(),
-          db
-            .select()
-            .from(Report)
-            .where(eq(Report.userId, person.id))
-            .execute(),
-          db
-            .select()
-            .from(Verification)
-            .where(eq(Verification.userId, person.id))
-            .execute(),
-        ]);
+        const [ratings, favourites, reports, verifications] = await Promise.all(
+          [
+            db
+              .select()
+              .from(Rating)
+              .where(eq(Rating.userId, person.id))
+              .execute(),
+            db
+              .select()
+              .from(Favourite)
+              .where(eq(Favourite.userId, person.id))
+              .execute(),
+            db
+              .select()
+              .from(Report)
+              .where(eq(Report.userId, person.id))
+              .execute(),
+            db
+              .select()
+              .from(Verification)
+              .where(eq(Verification.userId, person.id))
+              .execute(),
+          ]
+        );
 
         return {
           ...person,
           ratings,
           favourites,
           reports,
+          verifications,
         };
       });
 
