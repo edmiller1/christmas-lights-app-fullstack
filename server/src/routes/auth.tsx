@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "../db";
-import { Decoration, Favourite, Rating, Report, User } from "../db/schema";
-import { eq, sql } from "drizzle-orm";
+import { Favourite, Rating, Report, User, Verification } from "../db/schema";
+import { eq } from "drizzle-orm";
 import { authMiddleware } from "../lib/middleware";
 import { SyncResponse } from "./types";
 import { Resend } from "resend";
@@ -96,6 +96,11 @@ authRouter.get("/user", authMiddleware, async (c, next) => {
             .select()
             .from(Report)
             .where(eq(Report.userId, person.id))
+            .execute(),
+          db
+            .select()
+            .from(Verification)
+            .where(eq(Verification.userId, person.id))
             .execute(),
         ]);
 

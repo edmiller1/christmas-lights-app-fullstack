@@ -25,6 +25,16 @@ export const Cloudinary = {
       largeUrl: res.eager[2].secure_url as string,
     };
   },
+  uploadVerification: async (document: string) => {
+    const res = await cloudinary.uploader.upload(document, {
+      folder: "christmas-lights-app-verifications",
+    });
+
+    return {
+      id: res.public_id,
+      url: res.secure_url,
+    };
+  },
   destroy: async (id: string) => {
     await cloudinary.uploader.destroy(id, {
       invalidate: true,

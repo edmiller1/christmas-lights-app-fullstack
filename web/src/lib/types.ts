@@ -17,6 +17,7 @@ export interface User {
   ratings: Rating[];
   favourites: Favourite[];
   reports: Report[];
+  verifications: Verification[];
 }
 
 export interface Decoration {
@@ -99,6 +100,16 @@ export interface Report {
   userId: string;
   reasons: string[];
   additionalInfo: string;
+}
+
+export interface Verification {
+  id: string;
+  createdAt: string;
+  decorationId: string;
+  userId: string;
+  status: string;
+  document: string;
+  rejectedReason: string;
 }
 
 export interface MapboxSuggestion {

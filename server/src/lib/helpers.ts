@@ -1,3 +1,5 @@
+import { webcrypto } from "crypto";
+
 export const getLocationData = async (addressId: string) => {
   try {
     console.log("Fetching location data for addressId:", addressId);
@@ -66,4 +68,104 @@ export const getOptimizedImageUrls = (publicId: string) => {
       lg: `${baseUrl}/c_fill,w_1920,q_auto,f_auto/${publicId}`,
     },
   };
+};
+
+export const sendVerificationDiscordNotification = async (payload: any) => {
+  const webhookUrl = process.env.DISCORD_VERIFICATION_WEBHOOK_URL;
+  if (!webhookUrl) {
+    throw new Error("DISCORD_VERIFICATION_WEBHOOK_URL is not set");
+  }
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Discord API responded with status: ${response.status}`);
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Error sending verification discord notification:", error);
+    throw error;
+  }
+};
+
+export const sendReportDiscordNotification = async (payload: any) => {
+  const webhookUrl = process.env.DISCORD_REPORT_WEBHOOK_URL;
+  if (!webhookUrl) {
+    throw new Error("DISCORD_REPORT_WEBHOOK_URL is not set");
+  }
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Discord API responded with status: ${response.status}`);
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Error sending verification discord notification:", error);
+    throw error;
+  }
+};
+
+function hexToUint8Array(hex: string): Uint8Array {
+  if (!hex) {
+    throw new Error("Hex string is required");
+  }
+
+  const arr = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    arr[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return arr;
+}
+
+export const verifyDiscord = async (
+  body: string,
+  signature: string,
+  timestamp: string,
+  publicKey: string
+) => {
+  try {
+    const encoder = new TextEncoder();
+    const message = encoder.encode(timestamp + body);
+
+    //Convert hex strings to Uint8Arrays
+    const signatureBytes = hexToUint8Array(signature);
+    const publicKeyBytes = hexToUint8Array(publicKey);
+
+    // Import the public key
+    const key = await webcrypto.subtle.importKey(
+      "raw",
+      publicKeyBytes,
+      { name: "Ed25519", namedCurve: "Ed25519" },
+      false,
+      ["verify"]
+    );
+
+    // Verify the signature
+    return await webcrypto.subtle.verify(
+      { name: "Ed25519" },
+      key,
+      signatureBytes,
+      message
+    );
+  } catch (error) {
+    console.error("Error verifying Discord signature:", error);
+    return false;
+  }
 };

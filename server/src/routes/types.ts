@@ -41,3 +41,9 @@ export interface RateDecorationArgs {
   decorationId: string;
   rating: number;
 }
+
+export interface SubmitVerificationArgs {
+  decorationId: string;
+  document: string;
+  verification: string;
+}

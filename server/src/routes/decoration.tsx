@@ -11,19 +11,26 @@ import {
   Rating,
   Report,
   User,
+  Verification,
   View,
 } from "../db/schema";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { Cloudinary } from "../lib/cloudinary";
-import { getLocationData, getOptimizedImageUrls } from "../lib/helpers";
+import {
+  getLocationData,
+  getOptimizedImageUrls,
+  sendVerificationDiscordNotification,
+} from "../lib/helpers";
 import {
   RateDecorationArgs,
   ReportDecorationArgs,
+  SubmitVerificationArgs,
   UpdateDecorationArgs,
 } from "./types";
 import { Resend } from "resend";
 import { ReportEmail } from "../emails/report";
 import NewRatingEmail from "../emails/newRating";
+import VerificationSubmissionEmail from "../emails/verificationSubmission";
 
 export const decorationRouter = new Hono();
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -143,6 +150,7 @@ decorationRouter.get("getDecoration", async (c) => {
         region: Decoration.region,
         city: Decoration.city,
         year: Decoration.year,
+        verificationSubmitted: Decoration.verificationSubmitted,
         createdAt: Decoration.createdAt,
         userId: Decoration.userId,
         viewCount: db.$count(View, eq(View.decorationId, decorationId)),
@@ -575,6 +583,132 @@ decorationRouter.post("rateDecoration", authMiddleware, async (c) => {
     return c.json({ message: "Decoration rated successfully" }, 200);
   } catch (error) {
     console.error("Error rating decoration:", error);
+    return c.json({ error: "Internal server error " + error }, 500);
+  }
+});
+
+decorationRouter.post("submitVerification", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+    const { decorationId, document }: SubmitVerificationArgs =
+      await c.req.json();
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    if (!decorationId || !document) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    const decoration = await db.query.Decoration.findFirst({
+      where: eq(Decoration.id, decorationId),
+      with: {
+        images: true,
+      },
+    });
+
+    if (!decoration) {
+      return c.json({ error: "Decoration not found" }, 404);
+    }
+
+    if (decoration.verificationSubmitted || decoration.verified) {
+      return c.json(
+        { error: "Decoration already verified or submission is in review" },
+        400
+      );
+    }
+
+    await db
+      .update(Decoration)
+      .set({ verificationSubmitted: true, updatedAt: new Date() })
+      .where(eq(Decoration.id, decorationId));
+
+    const verification = await Cloudinary.uploadVerification(document);
+
+    const newVerification = await db
+      .insert(Verification)
+      .values({
+        decorationId,
+        publicId: verification.id,
+        document: verification.url,
+        status: "pending",
+        rejectedReason: null,
+      })
+      .returning({ id: Verification.id });
+
+    await resend.emails.send({
+      from: "Christmas Lights App <hello@christmaslightsapp.com>",
+      to: user.email,
+      subject: "Verification Submitted",
+      react: (
+        <VerificationSubmissionEmail
+          userName={user.name!}
+          decorationName={decoration.name}
+          decorationImage={decoration.images[0].url}
+          submissionDate={new Date().toLocaleDateString()}
+          submissionId={newVerification[0].id}
+        />
+      ),
+    });
+
+    //Send Discord message
+    await sendVerificationDiscordNotification({
+      content: "@here **New Verification Submission**",
+      embeds: [
+        {
+          title: "🔔 New Verification Submission",
+          description: `User "${user.name}" has submitted verification for decoration "${decoration.name}"`,
+          color: 0x00ff00,
+          fields: [
+            {
+              name: "Decoration ID",
+              value: decorationId,
+              inline: true,
+            },
+            {
+              name: "Verification ID",
+              value: newVerification[0].id,
+              inline: true,
+            },
+            {
+              name: "Document URL",
+              value: verification.url,
+              inline: true,
+            },
+            {
+              name: "Submitted At",
+              value: new Date().toISOString(),
+              inline: true,
+            },
+            {
+              name: "Admin Link",
+              value: `${process.env.FRONTEND_URL}/admin/verifications/${newVerification[0].id}`,
+              inline: false,
+            },
+          ],
+          thumbnail: {
+            url: decoration.images[0]?.url || "",
+          },
+          timestamp: new Date().toISOString(),
+          footer: {
+            text: "Christmas Lights App",
+          },
+        },
+      ],
+    });
+
+    return c.json({ message: "Verification submitted successfully" }, 200);
+  } catch (error) {
+    console.error("Error submitting verification:", error);
     return c.json({ error: "Internal server error " + error }, 500);
   }
 });

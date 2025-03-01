@@ -14,6 +14,7 @@ import {
 
 //ENUMS
 export const planEnum = pgEnum("plan", ["FREE", "PRO"]);
+export const statusEnum = pgEnum("status", ["pending", "approved", "rejected"]);
 
 //TABLES
 export const User = pgTable(
@@ -145,11 +146,10 @@ export const Report = pgTable("report", (t) => ({
 
 export const Verification = pgTable("verification", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
+  publicId: t.text().notNull(),
   document: t.text().notNull(),
-  approved: t.boolean().default(false),
-  rejected: t.boolean().default(false),
+  status: statusEnum("status").default("pending").notNull(),
   rejectedReason: t.text(),
-  archived: t.boolean().default(false),
   createdAt: t.timestamp().defaultNow().notNull(),
   updatedAt: t
     .timestamp({ mode: "date", withTimezone: true })
@@ -158,6 +158,10 @@ export const Verification = pgTable("verification", (t) => ({
     .uuid()
     .notNull()
     .references(() => Decoration.id, { onDelete: "cascade" }),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => User.id, { onDelete: "cascade" }),
 }));
 
 export const Route = pgTable("route", (t) => ({
@@ -191,6 +195,7 @@ export const UserRelations = relations(User, ({ many }) => ({
   history: many(Decoration),
   reports: many(Report),
   routes: many(Route),
+  verifications: many(Verification),
 }));
 
 export const DecorationRelations = relations(Decoration, ({ many, one }) => ({
@@ -255,6 +260,17 @@ export const ReportRelations = relations(Report, ({ one }) => ({
   }),
   user: one(User, {
     fields: [Report.userId],
+    references: [User.id],
+  }),
+}));
+
+export const VerificationRelations = relations(Verification, ({ one }) => ({
+  decoration: one(Decoration, {
+    fields: [Verification.decorationId],
+    references: [Decoration.id],
+  }),
+  user: one(User, {
+    fields: [Verification.userId],
     references: [User.id],
   }),
 }));

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Home, PlusCircle, Telescope, UserCircle } from "lucide-react";
+import { Bell, Home, SquarePlus, Telescope, UserCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { usePathname } from "next/navigation";
 import useStore from "@/store/useStore";
@@ -15,7 +15,7 @@ export const MobileNavbar = ({ className }: Props) => {
 
   return (
     <nav
-      className={`fixed shadow w-full h-18 bottom-0 left-0 right-0 z-50 flex items-center border-t ${className}`}
+      className={`fixed shadow w-full h-18 bottom-0 left-0 right-0 bg-background z-[99] flex items-center border-t ${className}`}
     >
       <div className="flex flex-auto items-start justify-around">
         <Button
@@ -63,19 +63,33 @@ export const MobileNavbar = ({ className }: Props) => {
             Explore
           </span>
         </Button>
-        <div className="absolute left-1/2 -translate-x-1/2 -top-10">
-          <div className="relative">
-            <Button
-              onClick={() => setDialogOpen(true)}
-              variant="default"
-              size="icon"
-              className="relative h-16 w-16 rounded-full bg-primary"
-            >
-              <PlusCircle className="h-10 w-10" />
-              <span className="sr-only">Create</span>
-            </Button>
-          </div>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`flex flex-col items-center justify-center p-1 h-16 w-20 transition-colors ${
+            pathname.includes("/explore") || pathname.includes("/decorations")
+              ? "text-primary"
+              : ""
+          }`}
+          onClick={() => setDialogOpen(true)}
+        >
+          <SquarePlus
+            className={`w-6 h-6 ${
+              pathname.includes("/explore") || pathname.includes("/decorations")
+                ? "text-primary"
+                : ""
+            }`}
+          />
+          <span
+            className={`text-xs mt-1 font-medium ${
+              pathname.includes("/explore") || pathname.includes("/decorations")
+                ? "text-primary"
+                : ""
+            }`}
+          >
+            Explore
+          </span>
+        </Button>
         <Button
           variant="ghost"
           size="icon"
