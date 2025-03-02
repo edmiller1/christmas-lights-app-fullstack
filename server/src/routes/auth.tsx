@@ -3,7 +3,7 @@ import { db } from "../db";
 import { Favourite, Rating, Report, User, Verification } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "../lib/middleware";
-import { SyncResponse } from "./types";
+import { SyncResponse, UpdateInfoArgs, UpdateSettingsArgs } from "./types";
 import { Resend } from "resend";
 import { Welcome } from "../emails/welcome";
 
@@ -123,5 +123,91 @@ authRouter.get("/user", authMiddleware, async (c, next) => {
   } catch (error) {
     console.error("Error in user:", error);
     return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+authRouter.put("/updateSettings", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const settings: UpdateSettingsArgs = await c.req.json();
+
+    if (!settings || Object.keys(settings).length === 0) {
+      return c.json({ error: "No settings provided" }, 400);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    // Validate settings
+    const allowedSettings = [
+      "notificationsOnAppVerification",
+      "notificationsOnAppRating",
+      "notificationsByEmailVerification",
+      "notificationsByEmailRating",
+    ];
+
+    const sanitizedSettings: Record<string, boolean> = {};
+
+    for (const key of Object.keys(settings)) {
+      if (
+        allowedSettings.includes(key) &&
+        typeof settings[key as keyof typeof settings] === "boolean"
+      ) {
+        const value = settings[key as keyof typeof settings];
+        sanitizedSettings[key] =
+          typeof value === "function" &&
+          typeof (value as Function)() === "boolean"
+            ? ((value as Function)() as boolean)
+            : (value as boolean);
+      } else {
+        return c.json({ error: `Invalid setting: ${key}` }, 400);
+      }
+    }
+
+    await db
+      .update(User)
+      .set({ ...sanitizedSettings, updatedAt: new Date() })
+      .where(eq(User.id, user.id));
+
+    return c.json({ message: "Settings updated successfully" }, 200);
+  } catch (error) {
+    console.error("Error in updateSettings:", error);
+    return c.json({ error: "Failed to update settings" }, 500);
+  }
+});
+
+authRouter.put("/updateInfo", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const info: UpdateInfoArgs = await c.req.json();
+
+    if (!info || Object.keys(info).length === 0) {
+      return c.json({ error: "No info provided" }, 400);
+    }
+
+    await db
+      .update(User)
+      .set({ ...info, updatedAt: new Date() })
+      .where(eq(User.externalId, auth.id));
+
+    return c.json({ message: "Info updated successfully" }, 200);
+  } catch (error) {
+    console.error("Error in updateInfo:", error);
+    return c.json({ error: "Failed to update info" }, 500);
   }
 });

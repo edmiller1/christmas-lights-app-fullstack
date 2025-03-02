@@ -9,17 +9,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { useRouter } from "next/navigation";
 import { ThemeChange } from "@/app/dashboard/components/theme-change";
 import { useSignOut } from "@/hooks/use-signout";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
 interface Props {
   user: User;
 }
 
 export const UserMenu = ({ user }: Props) => {
-  const router = useRouter();
   const { signOut, isLoading } = useSignOut();
 
   if (isLoading) {
@@ -53,18 +52,16 @@ export const UserMenu = ({ user }: Props) => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => router.push("/dashboard")}
-          >
-            Dashboard
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={() => router.push("/dashboard/account-settings")}
-          >
-            Settings
-          </DropdownMenuItem>
+          <Link href="/dashboard">
+            <DropdownMenuItem className="cursor-pointer">
+              Dashboard
+            </DropdownMenuItem>
+          </Link>
+          <Link href="/dashboard/account-settings">
+            <DropdownMenuItem className="cursor-pointer">
+              Settings
+            </DropdownMenuItem>
+          </Link>
           <ThemeChange />
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

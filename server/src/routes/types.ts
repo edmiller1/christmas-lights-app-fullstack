@@ -47,3 +47,12 @@ export interface SubmitVerificationArgs {
   document: string;
   verification: string;
 }
+
+export interface UpdateSettingsArgs {
+  [key: string]: boolean;
+}
+
+export interface UpdateInfoArgs {
+  name: string;
+  email: string;
+}
