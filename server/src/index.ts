@@ -5,6 +5,7 @@ import { showRoutes } from "hono/dev";
 import { authRouter } from "./routes/auth";
 import { decorationRouter } from "./routes/decoration";
 import { discordRouter } from "./routes/discord";
+import { statsRouter } from "./routes/stats";
 
 const app = new Hono();
 
@@ -31,6 +32,7 @@ app.get("/", (c) => {
 app.route("/api/auth", authRouter);
 app.route("/api/decoration", decorationRouter);
 app.route("/api/discord", discordRouter);
+app.route("/api/stats", statsRouter);
 
 // Show available routes in development
 showRoutes(app);
