@@ -56,3 +56,19 @@ export interface UpdateInfoArgs {
   name: string;
   email: string;
 }
+
+export interface DailyStat {
+  date: string;
+  views: number;
+  ratings: number;
+}
+
+export interface YearlyStatsResponse {
+  year: string;
+  totalDecorations: number;
+  totalViews: number;
+  totalRatings: number;
+  peakDay: string | null;
+  peakViews: number;
+  stats: DailyStat[];
+}

@@ -2,7 +2,9 @@ import { Hono } from "hono";
 import { db } from "../db";
 import { authMiddleware } from "../lib/middleware";
 import { User, Decoration, View, Rating } from "../db/schema";
-import { eq, and, sql, count, avg, gte, lt } from "drizzle-orm";
+import { eq, and, sql, count, avg, gte, lt, between } from "drizzle-orm";
+import { format } from "date-fns";
+import { DailyStat, YearlyStatsResponse } from "./types";
 
 export const statsRouter = new Hono();
 
@@ -134,6 +136,156 @@ statsRouter.get("/dashboardStats", authMiddleware, async (c) => {
     });
   } catch (error) {
     console.error("Error getting dashboard stats:", error);
+    return c.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      500
+    );
+  }
+});
+
+statsRouter.get("/yearlyStats", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    // Get year from query parameter, default to current year
+    const year = c.req.query("year") || new Date().getFullYear().toString();
+    const yearNum = parseInt(year);
+
+    // Get the user
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    // Get all decorations for this user in this year
+    const decorations = await db.query.Decoration.findMany({
+      where: and(eq(Decoration.userId, user.id), eq(Decoration.year, year)),
+    });
+
+    if (decorations.length === 0) {
+      const emptyResponse: YearlyStatsResponse = {
+        year,
+        totalDecorations: 0,
+        totalViews: 0,
+        totalRatings: 0,
+        peakDay: null,
+        peakViews: 0,
+        stats: [],
+      };
+      return c.json(emptyResponse);
+    }
+
+    // Get decoration IDs
+    const decorationIds = decorations.map((dec) => dec.id);
+
+    // Define seasonal date range (November 15 to January 15)
+    const seasonStart = new Date(yearNum, 10, 15); // November is month 10 (0-indexed)
+    const seasonEnd = new Date(yearNum + 1, 0, 15); // January is month 0 (0-indexed)
+
+    // Get all views within the season
+    const views = await db
+      .select({
+        id: View.id,
+        decorationId: View.decorationId,
+        createdAt: View.createdAt,
+      })
+      .from(View)
+      .where(
+        and(
+          sql`${View.decorationId} IN (${decorationIds.join(",")})`,
+          between(View.createdAt, seasonStart, seasonEnd)
+        )
+      )
+      .execute();
+
+    // Get all ratings within the season
+    const ratings = await db
+      .select({
+        id: Rating.id,
+        decorationId: Rating.decorationId,
+        createdAt: Rating.createdAt,
+      })
+      .from(Rating)
+      .where(
+        and(
+          sql`${Rating.decorationId} IN (${decorationIds.join(",")})`,
+          between(Rating.createdAt, seasonStart, seasonEnd)
+        )
+      )
+      .execute();
+
+    // Group views and ratings by day
+    const statsByDay: Record<string, DailyStat> = {};
+
+    // Initialize the data structure for each day in the season
+    let currentDate = new Date(seasonStart);
+    while (currentDate <= seasonEnd) {
+      const dateStr = format(currentDate, "MMM d");
+      statsByDay[dateStr] = {
+        date: dateStr,
+        views: 0,
+        ratings: 0,
+      };
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Count views by day
+    views.forEach((view) => {
+      const dateStr = format(new Date(view.createdAt), "MMM d");
+      if (statsByDay[dateStr]) {
+        statsByDay[dateStr].views += 1;
+      }
+    });
+
+    // Count ratings by day
+    ratings.forEach((rating) => {
+      const dateStr = format(new Date(rating.createdAt), "MMM d");
+      if (statsByDay[dateStr]) {
+        statsByDay[dateStr].ratings += 1;
+      }
+    });
+
+    // Convert to array and sort by date
+    const stats: DailyStat[] = Object.values(statsByDay);
+
+    // Get total views and ratings
+    const totalViews = views.length;
+    const totalRatings = ratings.length;
+
+    // Calculate peak day
+    let peakDay = null;
+    let peakViews = 0;
+
+    for (const day of stats) {
+      if (day.views > peakViews) {
+        peakViews = day.views;
+        peakDay = day.date;
+      }
+    }
+
+    const response: YearlyStatsResponse = {
+      year,
+      totalDecorations: decorations.length,
+      totalViews,
+      totalRatings,
+      peakDay,
+      peakViews,
+      stats,
+    };
+
+    return c.json(response, 200);
+  } catch (error) {
+    console.error("Error getting yearly stats:", error);
     return c.json(
       {
         error: "Internal server error",
