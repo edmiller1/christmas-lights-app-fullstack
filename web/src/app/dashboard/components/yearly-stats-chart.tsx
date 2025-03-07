@@ -109,7 +109,7 @@ export const YearlyStatsChart = () => {
             </CardDescription>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col items-center space-x-2 md:flex-row space-y-2 md:space-y-0">
           <Tabs
             defaultValue="line"
             value={chartType}
@@ -178,7 +178,7 @@ export const YearlyStatsChart = () => {
       <CardContent>
         {yearlyStatsLoading ? (
           <div className="flex items-center justify-center h-80">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : !yearlyStats || yearlyStats.stats.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-80 text-muted-foreground">

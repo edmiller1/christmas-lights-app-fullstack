@@ -1,7 +1,14 @@
 import { Hono } from "hono";
 import { db } from "../db";
-import { Favourite, Rating, Report, User, Verification } from "../db/schema";
-import { eq } from "drizzle-orm";
+import {
+  Favourite,
+  Notification,
+  Rating,
+  Report,
+  User,
+  Verification,
+} from "../db/schema";
+import { desc, eq } from "drizzle-orm";
 import { authMiddleware } from "../lib/middleware";
 import { SyncResponse, UpdateInfoArgs, UpdateSettingsArgs } from "./types";
 import { Resend } from "resend";
@@ -209,5 +216,160 @@ authRouter.put("/updateInfo", authMiddleware, async (c) => {
   } catch (error) {
     console.error("Error in updateInfo:", error);
     return c.json({ error: "Failed to update info" }, 500);
+  }
+});
+
+authRouter.get("/notifications", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+    const notifications = await db.query.Notification.findMany({
+      where: eq(Notification.userId, user.id),
+      orderBy: [desc(Notification.createdAt)],
+    });
+
+    return c.json(notifications);
+  } catch (error) {
+    console.error("Error in notifications:", error);
+    return c.json({ error: "Failed to get notifications" }, 500);
+  }
+});
+
+authRouter.put("/readNotification", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const { notificationId }: { notificationId: string } = await c.req.json();
+
+    if (!notificationId) {
+      return c.json({ error: "No notification ID provided" }, 400);
+    }
+
+    await db
+      .update(Notification)
+      .set({ unread: false, updatedAt: new Date() })
+      .where(eq(Notification.id, notificationId));
+
+    return c.json({ message: "Notification marked as read" }, 200);
+  } catch (error) {
+    console.error("Error in readNotification:", error);
+    return c.json({ error: "Failed to mark notification as read" }, 500);
+  }
+});
+
+authRouter.put("/unreadNotification", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const { notificationId }: { notificationId: string } = await c.req.json();
+
+    if (!notificationId) {
+      return c.json({ error: "No notification ID provided" }, 400);
+    }
+
+    await db
+      .update(Notification)
+      .set({ unread: true, updatedAt: new Date() })
+      .where(eq(Notification.id, notificationId));
+
+    return c.json({ message: "Notification marked as unread" }, 200);
+  } catch (error) {
+    console.error("Error in unreadNotification:", error);
+    return c.json({ error: "Failed to mark notification as unread" }, 500);
+  }
+});
+
+authRouter.put("/readAllNotifications", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    await db
+      .update(Notification)
+      .set({ unread: false, updatedAt: new Date() })
+      .where(eq(Notification.userId, user.id));
+
+    return c.json({ message: "All notifications marked as read" }, 200);
+  } catch (error) {
+    console.error("Error in readAllNotifications:", error);
+    return c.json({ error: "Failed to mark all notifications as read" }, 500);
+  }
+});
+
+authRouter.post("/deleteNotification", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const { notificationId }: { notificationId: string } = await c.req.json();
+
+    if (!notificationId) {
+      return c.json({ error: "No notification ID provided" }, 400);
+    }
+
+    await db.delete(Notification).where(eq(Notification.id, notificationId));
+
+    return c.json({ message: "Notification deleted successfully" }, 200);
+  } catch (error) {
+    console.error("Error in deleteNotification:", error);
+    return c.json({ error: "Failed to delete notification" }, 500);
+  }
+});
+
+authRouter.post("/deleteAllNotifications", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    await db.delete(Notification).where(eq(Notification.userId, user.id));
+
+    return c.json({ message: "All notifications deleted successfully" }, 200);
+  } catch (error) {
+    console.error("Error in deleteAllNotifications:", error);
+    return c.json({ error: "Failed to delete all notifications" }, 500);
   }
 });
