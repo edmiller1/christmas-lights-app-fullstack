@@ -4,6 +4,7 @@ import { Bell, Home, SquarePlus, Telescope, UserCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { usePathname } from "next/navigation";
 import useStore from "@/store/useStore";
+import Link from "next/link";
 
 interface Props {
   className?: string;
@@ -90,26 +91,28 @@ export const MobileNavbar = ({ className }: Props) => {
             Explore
           </span>
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`flex flex-col items-center justify-center p-1 h-16 w-20 transition-colors ${
-            pathname === "/notifications" ? "text-primary" : ""
-          }`}
-        >
-          <Bell
-            className={`w-6 h-6 ${
-              pathname === "/notifications" ? "text-primary" : ""
-            }`}
-          />
-          <span
-            className={`text-xs mt-1 font-medium ${
-              pathname === "/notifications" ? "text-primary" : ""
+        <Link href="/dashboard/notifications">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`flex flex-col items-center justify-center p-1 h-16 w-20 transition-colors ${
+              pathname === "/dashboard/notifications" ? "text-primary" : ""
             }`}
           >
-            Notifications
-          </span>
-        </Button>
+            <Bell
+              className={`w-6 h-6 ${
+                pathname === "/dashboard/notifications" ? "text-primary" : ""
+              }`}
+            />
+            <span
+              className={`text-xs mt-1 font-medium ${
+                pathname === "/dashboard/notifications" ? "text-primary" : ""
+              }`}
+            >
+              Notifications
+            </span>
+          </Button>
+        </Link>
         <Button
           variant="ghost"
           size="icon"
