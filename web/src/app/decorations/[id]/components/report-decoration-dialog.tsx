@@ -28,7 +28,7 @@ import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, TriangleAlert } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { reportDecoration } from "@/api/decoration/reportDecoration";
+import { reportDecoration } from "@/api/decoration";
 import { toast } from "sonner";
 
 const FormSchema = z.object({

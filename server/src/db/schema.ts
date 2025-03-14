@@ -15,6 +15,11 @@ import {
 //ENUMS
 export const planEnum = pgEnum("plan", ["FREE", "PRO"]);
 export const statusEnum = pgEnum("status", ["pending", "approved", "rejected"]);
+export const verificationEnum = pgEnum("verificationStatus", [
+  "approved",
+  "pending",
+  "rejected",
+]);
 
 //TABLES
 export const User = pgTable(
@@ -56,6 +61,7 @@ export const Decoration = pgTable("decoration", (t) => ({
   address: t.varchar({ length: 255 }).notNull(),
   verified: t.boolean().default(false),
   verificationSubmitted: t.boolean().default(false),
+  verificationStatus: verificationEnum("verificationStatus"),
   latitude: t.doublePrecision().notNull(),
   longitude: t.doublePrecision().notNull(),
   country: t.varchar({ length: 255 }).notNull(),

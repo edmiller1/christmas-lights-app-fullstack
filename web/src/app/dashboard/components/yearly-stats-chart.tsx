@@ -46,7 +46,7 @@ import {
   NameType,
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
-import { getYearlyStats } from "@/api/auth/yearlyStats";
+import { getYearlyStats } from "@/api/stats";
 
 const currentYear = new Date().getFullYear();
 

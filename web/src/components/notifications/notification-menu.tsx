@@ -26,13 +26,15 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { getNotifications } from "@/api/auth/notifications";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { markNotificationAsRead } from "@/api/auth/readNotification";
+import {
+  getNotifications,
+  markNotificationAsRead,
+  markNotificationAsUnread,
+  deleteNotification,
+} from "@/api/auth";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { useState } from "react";
 import { toast } from "sonner";
-import { markNotificationAsUnread } from "@/api/auth/unreadNotification";
-import { deleteNotification } from "@/api/auth/deleteNotification";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import Link from "next/link";
 import { DeleteAllNotificationsButton } from "./delete-all-notifications-button";

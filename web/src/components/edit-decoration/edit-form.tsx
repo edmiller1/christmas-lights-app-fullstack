@@ -30,7 +30,7 @@ import success from "../../lottie/success.json";
 import { LottieAnimation } from "../lottie-animation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { UpdateDecorationArgs } from "@/api/decoration/updateDecoration/types";
-import { updateDecoration } from "@/api/decoration/updateDecoration";
+import { updateDecoration } from "@/api/decoration";
 
 interface Props {
   decorationName: string;

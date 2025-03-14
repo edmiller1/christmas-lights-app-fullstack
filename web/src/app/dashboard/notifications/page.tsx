@@ -1,11 +1,13 @@
 "use client";
 
-import { deleteNotification } from "@/api/auth/deleteNotification";
-import { getNotifications } from "@/api/auth/notifications";
-import { markNotificationAsRead } from "@/api/auth/readNotification";
-import { markNotificationAsUnread } from "@/api/auth/unreadNotification";
-import { DeleteAllNotificationsButton } from "@/components/delete-all-notifications-button";
-import { MarkAllAsReadButton } from "@/components/mark-all-as-read-button";
+import {
+  deleteNotification,
+  getNotifications,
+  markNotificationAsRead,
+  markNotificationAsUnread,
+} from "@/api/auth";
+import { DeleteAllNotificationsButton } from "@/components/notifications/delete-all-notifications-button";
+import { MarkAllAsReadButton } from "@/components/notifications/mark-all-as-read-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {

@@ -6,12 +6,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EllipsisVertical } from "lucide-react";
+import { DeleteDecorationDialog } from "./delete-decoration-dialog";
 
 interface Props {
   setEditDialogOpen: (open: boolean) => void;
+  decorationId: string;
+  decorationName: string;
 }
 
-export const DecorationUserMenu = ({ setEditDialogOpen }: Props) => {
+export const DecorationUserMenu = ({
+  setEditDialogOpen,
+  decorationId,
+  decorationName,
+}: Props) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -24,9 +31,10 @@ export const DecorationUserMenu = ({ setEditDialogOpen }: Props) => {
         <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
           <span>Edit</span>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <span>Delete</span>
-        </DropdownMenuItem>
+        <DeleteDecorationDialog
+          decorationId={decorationId}
+          decorationName={decorationName}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   );

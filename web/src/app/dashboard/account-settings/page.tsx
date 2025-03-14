@@ -19,10 +19,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateSettings } from "@/api/auth/updateSettings";
+import { updateSettings, updateInfo } from "@/api/auth";
 import { toast } from "sonner";
 import { User } from "@/lib/types";
-import { updateInfo } from "@/api/auth/updateInfo";
 import { useEffect, useState } from "react";
 import { Loader2, Save, X } from "lucide-react";
 

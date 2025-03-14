@@ -26,6 +26,7 @@ export interface Decoration {
   address: string;
   verified: boolean;
   verificationSubmitted: boolean;
+  verificationStatus: string;
   latitude: number;
   longitude: number;
   country: string;

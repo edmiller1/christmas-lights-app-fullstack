@@ -1,7 +1,6 @@
 "use client";
 
-import { removeDecoration } from "@/api/decoration";
-import { saveDecoration } from "@/api/decoration/saveDecoration";
+import { removeDecoration, saveDecoration } from "@/api/decoration";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { User } from "@/lib/types";

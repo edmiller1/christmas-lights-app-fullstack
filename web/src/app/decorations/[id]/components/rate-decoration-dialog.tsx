@@ -1,6 +1,6 @@
 "use client";
 
-import { rateDecoration } from "@/api/decoration/rateDecoration";
+import { rateDecoration } from "@/api/decoration";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Search } from "lucide-react";
 import { CreateButton } from "../create-decoration/create-button";
-import { NotificationMenu } from "../notification-menu";
+import { NotificationMenu } from "../notifications/notification-menu";
 import { useUser } from "@/hooks/useUser";
 import { UserMenu } from "./user-menu";
 import { usePathname } from "next/navigation";

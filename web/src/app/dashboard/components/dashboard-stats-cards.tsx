@@ -1,6 +1,6 @@
 "use client";
 
-import { getDashboardStats } from "@/api/auth/dashboardStats";
+import { getDashboardStats } from "@/api/stats";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Award, Eye, Star, TrendingUp } from "lucide-react";

@@ -1,6 +1,6 @@
 "use client";
 
-import { getDecoration } from "@/api/decoration";
+import { getDecoration, submitDecorationVerification } from "@/api/decoration";
 import { LottieAnimation } from "@/components/lottie-animation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -13,7 +13,6 @@ import Image from "next/image";
 import { getFileBase64 } from "@/lib/helpers";
 import { NotFound } from "@/components/not-found";
 import { Button } from "@/components/ui/button";
-import { submitDecorationVerification } from "@/api/decoration/submitVerification";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useUser } from "@/hooks/useUser";

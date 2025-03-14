@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, LucideIcon } from "lucide-react";
+import { Lightbulb, LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -36,9 +36,9 @@ const sidebarItems: SidebarCategory[] = [
     items: [
       { href: "/dashboard", icon: Home, text: "Dashboard" },
       {
-        href: "/dashboard/verifications",
-        icon: BadgeCheck,
-        text: "Verifications",
+        href: "/dashboard/decorations",
+        icon: Lightbulb,
+        text: "Decorations",
       },
     ],
   },

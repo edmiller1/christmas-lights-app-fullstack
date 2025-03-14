@@ -744,3 +744,158 @@ decorationRouter.post("submitVerification", authMiddleware, async (c) => {
     return c.json({ error: "Internal server error " + error }, 500);
   }
 });
+
+decorationRouter.delete("deleteDecoration", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+    const { decorationId }: { decorationId: string } = await c.req.json();
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    if (!decorationId) {
+      return c.json({ error: "Decoration ID is required" }, 400);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    const decoration = await db.query.Decoration.findFirst({
+      where: and(
+        eq(Decoration.id, decorationId),
+        eq(Decoration.userId, user.id)
+      ),
+      with: {
+        images: true,
+      },
+    });
+
+    if (!decoration) {
+      return c.json(
+        { error: "Decoration not found or not owned by user" },
+        404
+      );
+    }
+
+    // Delete decoration and related data in a transaction
+    await db.transaction(async (tx) => {
+      // Delete images from Cloudinary (if you have that functionality)
+      for (const image of decoration.images) {
+        try {
+          await Cloudinary.destroy(image.publicId);
+        } catch (deleteError) {
+          console.error("Failed to delete image:", image.publicId, deleteError);
+          // Continue with deletion even if Cloudinary fails
+        }
+      }
+
+      // Delete all related records
+      await tx
+        .delete(DecorationImage)
+        .where(eq(DecorationImage.decorationId, decorationId));
+      await tx.delete(Rating).where(eq(Rating.decorationId, decorationId));
+      await tx.delete(View).where(eq(View.decorationId, decorationId));
+      await tx
+        .delete(Verification)
+        .where(eq(Verification.decorationId, decorationId));
+
+      // Finally delete the decoration itself
+      await tx.delete(Decoration).where(eq(Decoration.id, decorationId));
+    });
+
+    return c.json({ message: "Decoration deleted successfully" }, 200);
+  } catch (error) {
+    console.error("Error deleting decoration:", error);
+    return c.json({ error: "Internal server error " + error }, 500);
+  }
+});
+
+decorationRouter.get("userDecorations", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    const decorations = await db
+      .select({
+        id: Decoration.id,
+        name: Decoration.name,
+        address: Decoration.address,
+        verified: Decoration.verified,
+        verificationSubmitted: Decoration.verificationSubmitted,
+        latitude: Decoration.latitude,
+        longitude: Decoration.longitude,
+        country: Decoration.country,
+        region: Decoration.region,
+        city: Decoration.city,
+        year: Decoration.year,
+        createdAt: Decoration.createdAt,
+        viewCount: sql<number>`COALESCE(COUNT(DISTINCT ${View.id}), 0)`,
+        ratingCount: sql<number>`COALESCE(COUNT(DISTINCT ${Rating.id}), 0)`,
+        averageRating: sql<number>`
+          COALESCE(
+            AVG(${Rating.rating}::numeric)::numeric(10,2),
+            0
+          )
+        `,
+      })
+      .from(Decoration)
+      .leftJoin(View, eq(View.decorationId, Decoration.id))
+      .leftJoin(Rating, eq(Rating.decorationId, Decoration.id))
+      .where(eq(Decoration.userId, user.id))
+      .groupBy(Decoration.id)
+      .orderBy(Decoration.createdAt)
+      .execute()
+      .then(async (decs) => {
+        // Get images for each decoration
+        return Promise.all(
+          decs.map(async (dec) => {
+            const images = await db
+              .select()
+              .from(DecorationImage)
+              .where(eq(DecorationImage.decorationId, dec.id))
+              .orderBy(DecorationImage.index)
+              .execute();
+
+            const optimizedImages = images.map((image) => ({
+              ...image,
+              ...getOptimizedImageUrls(image.publicId),
+            }));
+
+            // Check if there's a pending verification
+            const verification = await db.query.Verification.findFirst({
+              where: eq(Verification.decorationId, dec.id),
+              orderBy: (veri, { desc }) => [desc(veri.createdAt)],
+            });
+
+            return {
+              ...dec,
+              images: optimizedImages,
+              verificationStatus: verification?.status || null,
+            };
+          })
+        );
+      });
+
+    return c.json({ decorations });
+  } catch (error) {
+    console.error("Error getting user decorations:", error);
+    return c.json({ error: "Internal server error " + error }, 500);
+  }
+});

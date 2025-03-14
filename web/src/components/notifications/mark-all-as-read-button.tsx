@@ -1,4 +1,4 @@
-import { markAllNotificationsAsRead } from "@/api/auth/readAllNotifications";
+import { markAllNotificationsAsRead } from "@/api/auth";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -7,8 +7,8 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
-import { Button } from "./ui/button";
+} from "../ui/tooltip";
+import { Button } from "../ui/button";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
 export const MarkAllAsReadButton = () => {

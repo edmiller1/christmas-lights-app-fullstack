@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteAllNotifications } from "@/api/auth/deleteAllNotifications";
+import { deleteAllNotifications } from "@/api/auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -8,8 +8,8 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
-import { Button } from "./ui/button";
+} from "../ui/tooltip";
+import { Button } from "../ui/button";
 import { Loader2, Trash2 } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 

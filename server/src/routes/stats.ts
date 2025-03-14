@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { db } from "../db";
 import { authMiddleware } from "../lib/middleware";
 import { User, Decoration, View, Rating } from "../db/schema";
-import { eq, and, sql, count, avg, gte, lt, between } from "drizzle-orm";
+import { eq, and, sql, count, avg, gte, lt, between, desc } from "drizzle-orm";
 import { format } from "date-fns";
 import { DailyStat, YearlyStatsResponse } from "./types";
 
@@ -286,6 +286,109 @@ statsRouter.get("/yearlyStats", authMiddleware, async (c) => {
     return c.json(response, 200);
   } catch (error) {
     console.error("Error getting yearly stats:", error);
+    return c.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      500
+    );
+  }
+});
+
+statsRouter.get("/decorationsStats", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    const totalDecorations = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(Decoration)
+      .where(eq(Decoration.userId, user.id))
+      .then((result) => result[0]?.count || 0);
+
+    const verifiedDecorations = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(Decoration)
+      .where(and(eq(Decoration.userId, user.id), eq(Decoration.verified, true)))
+      .then((result) => result[0]?.count || 0);
+
+    const totalViews = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(View)
+      .innerJoin(Decoration, eq(Decoration.id, View.decorationId))
+      .where(eq(Decoration.userId, user.id))
+      .then((result) => result[0]?.count || 0);
+
+    const averageRating = await db
+      .select({
+        average: sql<number>`
+          COALESCE(
+            AVG(${Rating.rating}::numeric)::numeric(10,2),
+            0
+          )
+        `,
+      })
+      .from(Rating)
+      .innerJoin(Decoration, eq(Decoration.id, Rating.decorationId))
+      .where(eq(Decoration.userId, user.id))
+      .then((result) => result[0]?.average || 0);
+
+    const mostViewedDecoration = await db
+      .select({
+        id: Decoration.id,
+        name: Decoration.name,
+        viewCount: sql<number>`COUNT(${View.id})`,
+      })
+      .from(Decoration)
+      .leftJoin(View, eq(View.decorationId, Decoration.id))
+      .where(eq(Decoration.userId, user.id))
+      .groupBy(Decoration.id)
+      .orderBy(desc(sql`COUNT(${View.id})`))
+      .limit(1)
+      .then((result) => result[0] || null);
+
+    const highestRatedDecoration = await db
+      .select({
+        id: Decoration.id,
+        name: Decoration.name,
+        averageRating: sql<number>`
+          COALESCE(
+            AVG(${Rating.rating}::numeric)::numeric(10,2),
+            0
+          )
+        `,
+      })
+      .from(Decoration)
+      .leftJoin(Rating, eq(Rating.decorationId, Decoration.id))
+      .where(eq(Decoration.userId, user.id))
+      .groupBy(Decoration.id)
+      .having(sql`COUNT(${Rating.id}) > 0`)
+      .orderBy(desc(sql`AVG(${Rating.rating}::numeric)`))
+      .limit(1)
+      .then((result) => result[0] || null);
+
+    return c.json({
+      totalDecorations,
+      verifiedDecorations,
+      totalViews,
+      averageRating,
+      mostViewedDecoration,
+      highestRatedDecoration,
+    });
+  } catch (error) {
+    console.error("Error getting decorations:", error);
     return c.json(
       {
         error: "Internal server error",

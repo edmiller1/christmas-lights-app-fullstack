@@ -31,6 +31,7 @@ import { getDecoration } from "@/api/decoration";
 import { EditDecoration } from "@/components/edit-decoration/edit-decoration";
 import useStore from "@/store/useStore";
 import { DecorationMap } from "./components/decoration-map";
+import { DeleteDecorationDialog } from "./components/delete-decoration-dialog";
 
 const DecorationPage = () => {
   const { setEditDialogOpen } = useStore((state) => state);
@@ -130,7 +131,11 @@ const DecorationPage = () => {
                     verificationSubmitted={decoration.verificationSubmitted}
                     verified={decoration.verified}
                   />
-                  <DecorationUserMenu setEditDialogOpen={setEditDialogOpen} />
+                  <DecorationUserMenu
+                    setEditDialogOpen={setEditDialogOpen}
+                    decorationId={decoration.id}
+                    decorationName={decoration.name}
+                  />
                 </div>
               ) : (
                 <DecorationMenu
@@ -286,7 +291,10 @@ const DecorationPage = () => {
             >
               Edit
             </Button>
-            <Button size="lg">Delete</Button>
+            <DeleteDecorationDialog
+              decorationId={decoration.id}
+              decorationName={decoration.name}
+            />
           </div>
         )}
       </div>
