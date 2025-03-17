@@ -899,3 +899,106 @@ decorationRouter.get("userDecorations", authMiddleware, async (c) => {
     return c.json({ error: "Internal server error " + error }, 500);
   }
 });
+
+decorationRouter.get("userFavourites", authMiddleware, async (c) => {
+  try {
+    const auth = c.get("user");
+
+    if (!auth) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const user = await db.query.User.findFirst({
+      where: eq(User.externalId, auth.id),
+    });
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    const favourites = await db
+      .select({
+        favouriteId: Favourite.id,
+        decorationId: Favourite.decorationId,
+      })
+      .from(Favourite)
+      .where(eq(Favourite.userId, user.id))
+      .execute();
+
+    if (!favourites.length) {
+      return c.json({ favourites: [] });
+    }
+
+    const decorationIds = favourites.map((fav) => fav.decorationId);
+
+    const decorations = await Promise.all(
+      decorationIds.map(async (decorationId) => {
+        const decoration = await db
+          .select({
+            id: Decoration.id,
+            name: Decoration.name,
+            address: Decoration.address,
+            verified: Decoration.verified,
+            latitude: Decoration.latitude,
+            longitude: Decoration.longitude,
+            country: Decoration.country,
+            region: Decoration.region,
+            city: Decoration.city,
+            year: Decoration.year,
+            createdAt: Decoration.createdAt,
+            userId: Decoration.userId,
+            viewCount: db.$count(View, eq(View.decorationId, decorationId)),
+            ratingCount: db.$count(
+              Rating,
+              eq(Rating.decorationId, decorationId)
+            ),
+            averageRating: sql<number>`
+              COALESCE(
+                (SELECT AVG(${Rating.rating}::numeric)::numeric(10,2)
+                FROM ${Rating}
+                WHERE ${Rating.decorationId} = ${decorationId}),
+                0
+              )
+            `,
+          })
+          .from(Decoration)
+          .where(eq(Decoration.id, decorationId))
+          .execute()
+          .then(async ([dec]) => {
+            if (!dec) return null;
+
+            const images = await db
+              .select()
+              .from(DecorationImage)
+              .where(eq(DecorationImage.decorationId, decorationId))
+              .orderBy(DecorationImage.index)
+              .execute();
+
+            const optimizedImages = images.map((image) => ({
+              ...image,
+              ...getOptimizedImageUrls(image.publicId),
+            }));
+
+            return {
+              ...dec,
+              images: optimizedImages,
+              // Add favourite info
+              favourite: {
+                id: favourites.find((f) => f.decorationId === decorationId)
+                  ?.favouriteId,
+              },
+            };
+          });
+
+        return decoration;
+      })
+    );
+
+    return c.json({
+      favourites: decorations.filter(Boolean),
+    });
+  } catch (error) {
+    console.error("Error getting user favourites:", error);
+    return c.json({ error: "Internal server error " + error }, 500);
+  }
+});

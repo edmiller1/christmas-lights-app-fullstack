@@ -18,8 +18,8 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold">👋 Hi {user?.name}</h1>
+    <div className="py-6 mb-8">
+      <h1 className="text-3xl font-bold tracking-tight">👋 Hi {user?.name}</h1>
       <DashboardStatsCards />
       <YearlyStatsChart />
     </div>

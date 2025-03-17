@@ -7,3 +7,5 @@ export * from "./reportDecoration";
 export * from "./saveDecoration";
 export * from "./submitVerification";
 export * from "./updateDecoration";
+export * from "./userDecorations";
+export * from "./userFavourites";

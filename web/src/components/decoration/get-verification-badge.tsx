@@ -30,7 +30,7 @@ export const getVerificationBadge = (decoration: Decoration) => {
     );
   }
   return (
-    <Badge variant="outline">
+    <Badge className="bg-white hover:bg-gray-50 text-black">
       <AlertTriangle className="w-3 h-3 mr-1" /> Unverified
     </Badge>
   );

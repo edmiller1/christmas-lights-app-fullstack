@@ -1,7 +1,7 @@
 "use client";
 
 import { getDecorationsStats } from "@/api/stats";
-import { getUserDecorations } from "@/api/auth";
+import { getUserDecorations } from "@/api/decoration";
 import {
   Card,
   CardContent,
@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Eye, Lightbulb, Star } from "lucide-react";
 import { Fragment, useState } from "react";
-import { DecorationCard } from "../components/decoration-card";
+import { UserDecorationCard } from "../components/user-decoration-card";
 import { Button } from "@/components/ui/button";
 
 const DecorationsPage = () => {
@@ -259,7 +259,7 @@ const DecorationsPage = () => {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredDecorations.map((decoration) => (
               <Fragment key={decoration.id}>
-                <DecorationCard decoration={decoration} />
+                <UserDecorationCard decoration={decoration} />
               </Fragment>
             ))}
           </div>

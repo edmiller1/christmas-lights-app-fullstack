@@ -8,4 +8,3 @@ export * from "./readNotification";
 export * from "./unreadNotification";
 export * from "./updateInfo";
 export * from "./updateSettings";
-export * from "./userDecorations";
