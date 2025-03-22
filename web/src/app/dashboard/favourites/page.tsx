@@ -1,18 +1,12 @@
 "use client";
 
 import { getUserFavourites } from "@/api/decoration";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Fragment } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DecorationCard } from "../components/decoration-card";
+import { DecorationCardSkeleton } from "../components/decoration-card-skeleton";
 
 const FavouritesPage = () => {
   const {
@@ -35,28 +29,7 @@ const FavouritesPage = () => {
       </div>
 
       {favouritesLoading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="overflow-hidden">
-              <div className="relative h-48 w-full">
-                <Skeleton className="h-full w-full" />
-              </div>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-full" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Skeleton className="h-10 w-full" />
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+        <DecorationCardSkeleton array={[1, 2, 3]} />
       ) : favourites && favourites.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {favourites.map((decoration) => (
@@ -65,7 +38,7 @@ const FavouritesPage = () => {
             </Fragment>
           ))}
         </div>
-      ) : !favouritesError ? (
+      ) : favouritesError ? (
         <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
             <Heart className="h-10 w-10 text-primary" />

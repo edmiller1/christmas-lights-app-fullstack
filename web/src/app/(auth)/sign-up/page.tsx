@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { SignUpForm } from "./components/sign-up-form";
+import { getServerUser } from "@/hooks/getServerUser";
 
 interface Props {
   searchParams: {
@@ -10,11 +10,7 @@ interface Props {
 
 const SignUpPage = async ({ searchParams }: Props) => {
   const params = await searchParams;
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerUser();
 
   if (user) {
     redirect("/");

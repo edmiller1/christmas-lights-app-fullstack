@@ -20,13 +20,11 @@ export interface User {
   verifications: Verification[];
 }
 
-export interface Decoration {
+export interface DecorationBase {
   id: string;
   name: string;
   address: string;
   verified: boolean;
-  verificationSubmitted: boolean;
-  verificationStatus: string;
   latitude: number;
   longitude: number;
   country: string;
@@ -35,14 +33,26 @@ export interface Decoration {
   year: string;
   createdAt: string;
   userId: string;
-  routeId: string | null;
   averageRating: string;
   ratingCount: number;
   viewCount: number;
   images: DecorationPicture[];
+}
+
+export interface Decoration extends DecorationBase {
+  verificationSubmitted: boolean;
+  verificationStatus: string;
+  routeId: string | null;
   ratings: Rating[];
   favourites: Favourite[];
 }
+
+export interface HistoryDecoration extends DecorationBase {
+  historyId: string;
+  viewedAt: string;
+}
+
+export type DecorationCardItem = Decoration | HistoryDecoration;
 
 export interface DecorationImage {
   id: string;

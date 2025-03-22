@@ -7,6 +7,7 @@ import {
   Decoration,
   DecorationImage,
   Favourite,
+  History,
   Notification,
   Rating,
   Report,
@@ -134,12 +135,42 @@ decorationRouter.post(
 /**
  * Get decoration by ID
  */
-decorationRouter.get("getDecoration", async (c) => {
+decorationRouter.get("getDecoration", authMiddleware, async (c) => {
   try {
     const decorationId = c.req.query("decorationId");
+    const auth = c.get("user");
 
     if (!decorationId) {
       return c.json({ error: "Decoration ID is required" }, 400);
+    }
+
+    if (auth) {
+      const user = await db.query.User.findFirst({
+        where: eq(User.externalId, auth.id),
+      });
+
+      if (user) {
+        const existingHistory = await db.query.History.findFirst({
+          where: and(
+            eq(History.userId, user.id),
+            eq(History.decorationId, decorationId)
+          ),
+        });
+
+        if (existingHistory) {
+          await db
+            .update(History)
+            .set({
+              updatedAt: new Date(),
+            })
+            .where(eq(History.id, existingHistory.id));
+        } else {
+          await db.insert(History).values({
+            decorationId,
+            userId: user.id,
+          });
+        }
+      }
     }
 
     // Increment the view asynchronously

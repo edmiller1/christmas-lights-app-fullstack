@@ -1,4 +1,4 @@
-import { publicAxios } from "@/lib/axios";
+import privateAxios from "@/lib/axios";
 import { Decoration, DecorationPicture, Rating } from "@/lib/types";
 
 interface DecorationResponse extends Decoration {
@@ -11,7 +11,7 @@ interface DecorationResponse extends Decoration {
 }
 
 export const getDecoration = async (decorationId: string) => {
-  const response = await publicAxios.get<DecorationResponse>(
+  const response = await privateAxios.get<DecorationResponse>(
     "/api/decoration/getDecoration",
     {
       params: {

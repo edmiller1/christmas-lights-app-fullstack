@@ -1,3 +1,5 @@
+import { DecorationCardItem, HistoryDecoration } from "./types";
+
 export const generateUID = (): string => {
   let firstPart: number | string = (Math.random() * 46656) | 0;
   let secondPart: number | string = (Math.random() * 46656) | 0;
@@ -31,3 +33,9 @@ export const getFileBase64 = (file: File): Promise<string> => {
     }
   });
 };
+
+export function isHistoryDecoration(
+  decoration: DecorationCardItem
+): decoration is HistoryDecoration {
+  return "historyId" in decoration && "viewedAt" in decoration;
+}

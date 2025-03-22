@@ -191,6 +191,25 @@ export const Favourite = pgTable("favourite", (t) => ({
     .uuid()
     .notNull()
     .references(() => User.id, { onDelete: "cascade" }),
+  updatedAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .$onUpdateFn(() => sql`now()`),
+}));
+
+export const History = pgTable("history", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  createdAt: t.timestamp().defaultNow().notNull(),
+  decorationId: t
+    .uuid()
+    .notNull()
+    .references(() => Decoration.id, { onDelete: "cascade" }),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => User.id, { onDelete: "cascade" }),
+  updatedAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .$onUpdateFn(() => sql`now()`),
 }));
 
 //RELATIONS
@@ -198,7 +217,7 @@ export const UserRelations = relations(User, ({ many }) => ({
   decorations: many(Decoration),
   ratings: many(Rating),
   favourites: many(Favourite),
-  history: many(Decoration),
+  history: many(History),
   reports: many(Report),
   routes: many(Route),
   verifications: many(Verification),
@@ -278,5 +297,16 @@ export const VerificationRelations = relations(Verification, ({ one }) => ({
   user: one(User, {
     fields: [Verification.userId],
     references: [User.id],
+  }),
+}));
+
+export const HistoryRelations = relations(History, ({ one }) => ({
+  user: one(User, {
+    fields: [History.userId],
+    references: [User.id],
+  }),
+  decoration: one(Decoration, {
+    fields: [History.decorationId],
+    references: [Decoration.id],
   }),
 }));

@@ -71,7 +71,7 @@ export const HeartButton = ({ decorationId }: Props) => {
             <Heart className="w-4 h-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Save decoration</TooltipContent>
+        <TooltipContent>Save decoration to favourites</TooltipContent>
       </Tooltip>
     </TooltipProvider>;
   }
@@ -94,7 +94,7 @@ export const HeartButton = ({ decorationId }: Props) => {
                 )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Remove decoration</TooltipContent>
+            <TooltipContent>Remove from favourites</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       ) : (
@@ -114,7 +114,7 @@ export const HeartButton = ({ decorationId }: Props) => {
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Save decoration</TooltipContent>
+              <TooltipContent>Save to favourites</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </>
