@@ -8,6 +8,7 @@
     "@auth/drizzle-adapter": "^1.7.4",
     "@hono/zod-validator": "^0.4.2",
     "@neondatabase/serverless": "^0.10.4",
+    "@polar-sh/hono": "^0.2.21",
     "@react-email/components": "0.0.32",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.14",
