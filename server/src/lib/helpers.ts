@@ -1,4 +1,7 @@
-import { webcrypto } from "crypto";
+import { createHmac, timingSafeEqual, webcrypto } from "crypto";
+import { db } from "../db";
+import { Subscription, User } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 export const getLocationData = async (addressId: string) => {
   try {
@@ -167,5 +170,264 @@ export const verifyDiscord = async (
   } catch (error) {
     console.error("Error verifying Discord signature:", error);
     return false;
+  }
+};
+
+export const verifyWebhookSignature = (
+  payload: string,
+  signature?: string
+): boolean => {
+  if (!signature || !process.env.LEMON_SQUEEZY_WEBHOOK_SECRET) {
+    return false;
+  }
+
+  const hmac = createHmac("sha256", process.env.LEMON_SQUUEZY_WEBHOOK_SECRET!);
+  const digest = hmac.update(payload).digest("hex");
+
+  const digestBytes = Buffer.from(digest, "hex");
+  const signatureBytes = Buffer.from(signature, "hex");
+
+  if (digestBytes.length !== signatureBytes.length) {
+    return false;
+  }
+
+  try {
+    return timingSafeEqual(
+      digestBytes as unknown as Uint8Array,
+      signatureBytes as unknown as Uint8Array
+    );
+  } catch (error) {
+    console.error("Error comparing signatures:", error);
+    return false;
+  }
+};
+
+export const handleSubscriptionCreated = async (payload: any) => {
+  try {
+    const { data } = payload;
+    const subscriptionData = data.attributes;
+    const customData = subscriptionData.custom_data;
+    const userId = customData?.user_id;
+
+    if (!userId) {
+      console.error("No user ID found in subscription data");
+      return;
+    }
+
+    // Update user plan to PRO
+    await db
+      .update(User)
+      .set({
+        plan: "PRO",
+        updatedAt: new Date(),
+      })
+      .where(eq(User.id, userId));
+
+    await updateUserLimits(userId, "PRO");
+
+    // Create subscription record in your database
+    await db.insert(Subscription).values({
+      userId,
+      lemonSqueezyId: data.id,
+      orderId: subscriptionData.order_id,
+      status: subscriptionData.status,
+      variantId: subscriptionData.variant_id,
+      renewsAt: subscriptionData.renews_at
+        ? new Date(subscriptionData.renews_at)
+        : null,
+      endsAt: null,
+    });
+
+    console.log(`Upgraded user ${userId} to PRO plan`);
+  } catch (error) {
+    console.error("Error handling subscription created:", error);
+    throw error;
+  }
+};
+
+export const handleSubscriptionUpdated = async (payload: any) => {
+  try {
+    const { data } = payload;
+    const subscriptionData = data.attributes;
+
+    // Find subscription in your database
+    const subscription = await db.query.Subscription.findFirst({
+      where: eq(Subscription.lemonSqueezyId, data.id),
+    });
+
+    if (!subscription) {
+      console.error(`Subscription ${data.id} not found in database`);
+      return;
+    }
+
+    // Update subscription record
+    await db
+      .update(Subscription)
+      .set({
+        status: subscriptionData.status,
+        renewsAt: subscriptionData.renews_at
+          ? new Date(subscriptionData.renews_at)
+          : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(Subscription.lemonSqueezyId, data.id));
+
+    console.log(
+      `Updated subscription ${data.id} status to ${subscriptionData.status}`
+    );
+  } catch (error) {
+    console.error("Error handling subscription updated:", error);
+    throw error;
+  }
+};
+
+export const handleSubscriptionCancelled = async (payload: any) => {
+  try {
+    const { data } = payload;
+    const subscriptionData = data.attributes;
+
+    // Find subscription in your database
+    const subscription = await db.query.Subscription.findFirst({
+      where: eq(Subscription.lemonSqueezyId, data.id),
+      with: {
+        user: true,
+      },
+    });
+
+    if (!subscription) {
+      console.error(`Subscription ${data.id} not found in database`);
+      return;
+    }
+
+    // await updateUserLimits(subscription.user.id, "FREE");
+
+    // Update subscription record
+    await db
+      .update(Subscription)
+      .set({
+        status: "cancelled",
+        endsAt: subscriptionData.ends_at
+          ? new Date(subscriptionData.ends_at)
+          : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(Subscription.lemonSqueezyId, data.id));
+
+    // Keep the user on PRO plan until the subscription ends
+    console.log(
+      `Cancelled subscription ${data.id}, will end on ${subscriptionData.ends_at}`
+    );
+  } catch (error) {
+    console.error("Error handling subscription cancelled:", error);
+    throw error;
+  }
+};
+
+export const handleSubscriptionResumed = async (payload: any) => {
+  try {
+    const { data } = payload;
+    const subscriptionData = data.attributes;
+
+    // Find subscription in your database
+    const subscription = await db.query.Subscription.findFirst({
+      where: eq(Subscription.lemonSqueezyId, data.id),
+    });
+
+    if (!subscription) {
+      console.error(`Subscription ${data.id} not found in database`);
+      return;
+    }
+
+    // Update subscription record
+    await db
+      .update(Subscription)
+      .set({
+        status: "active",
+        endsAt: null,
+        renewsAt: subscriptionData.renews_at
+          ? new Date(subscriptionData.renews_at)
+          : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(Subscription.lemonSqueezyId, data.id));
+
+    console.log(`Resumed subscription ${data.id}`);
+  } catch (error) {
+    console.error("Error handling subscription resumed:", error);
+    throw error;
+  }
+};
+
+export const handleSubscriptionExpired = async (payload: any) => {
+  try {
+    const { data } = payload;
+
+    // Find subscription in your database
+    const subscription = await db.query.Subscription.findFirst({
+      where: eq(Subscription.lemonSqueezyId, data.id),
+      with: {
+        user: true,
+      },
+    });
+
+    if (!subscription) {
+      console.error(`Subscription ${data.id} not found in database`);
+      return;
+    }
+
+    // Update subscription record
+    await db
+      .update(Subscription)
+      .set({
+        status: "expired",
+        endsAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(Subscription.lemonSqueezyId, data.id));
+
+    // Downgrade user back to FREE plan
+    await db
+      .update(User)
+      .set({
+        plan: "FREE",
+        updatedAt: new Date(),
+      })
+      .where(eq(User.id, subscription.userId));
+
+    console.log(
+      `Expired subscription ${data.id} and downgraded user ${subscription.userId} to FREE plan`
+    );
+  } catch (error) {
+    console.error("Error handling subscription expired:", error);
+    throw error;
+  }
+};
+
+export const updateUserLimits = async (
+  userId: string,
+  plan: "FREE" | "PRO"
+) => {
+  try {
+    const limits =
+      plan === "PRO"
+        ? {
+            maxDecorations: 3,
+            maxImagesPerDecoration: 16,
+            maxFavourites: null,
+            maxHistory: null,
+          }
+        : {
+            maxDecorations: 1,
+            maxImagesPerDecoration: 8,
+            maxFavourites: 10,
+            maxHistory: 20,
+          };
+
+    await db.update(User).set(limits).where(eq(User.id, userId));
+
+    console.log(`Updated limits for user ${userId} to ${plan} plan`);
+  } catch (error) {
+    console.error("Error updating user limits:", error);
+    throw error;
   }
 };

@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
+  integer,
   pgEnum,
   pgTable,
   primaryKey,
@@ -44,6 +45,10 @@ export const User = pgTable(
     notificationsByEmailRating: boolean("notificationsByEmailRating").default(
       true
     ),
+    maxDecorations: integer().default(5),
+    maxImagesPerDecoration: integer().default(5),
+    maxFavorites: integer().default(10),
+    maxHistory: integer().default(20),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt", {
       mode: "date",
@@ -54,6 +59,24 @@ export const User = pgTable(
     emailIdx: uniqueIndex("email_idx").on(table.email),
   })
 );
+
+export const Subscription = pgTable("subscription", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  userId: t
+    .uuid()
+    .notNull()
+    .references(() => User.id, { onDelete: "cascade" }),
+  lemonSqueezyId: t.varchar({ length: 255 }).notNull(),
+  orderId: t.varchar({ length: 255 }),
+  status: t.varchar({ length: 255 }).notNull(), // active, cancelled, expired
+  variantId: t.varchar({ length: 255 }),
+  renewsAt: t.timestamp(),
+  endsAt: t.timestamp(),
+  createdAt: t.timestamp().defaultNow().notNull(),
+  updatedAt: t
+    .timestamp({ mode: "date", withTimezone: true })
+    .$onUpdateFn(() => sql`now()`),
+}));
 
 export const Decoration = pgTable("decoration", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
@@ -213,7 +236,7 @@ export const History = pgTable("history", (t) => ({
 }));
 
 //RELATIONS
-export const UserRelations = relations(User, ({ many }) => ({
+export const UserRelations = relations(User, ({ many, one }) => ({
   decorations: many(Decoration),
   ratings: many(Rating),
   favourites: many(Favourite),
@@ -221,6 +244,17 @@ export const UserRelations = relations(User, ({ many }) => ({
   reports: many(Report),
   routes: many(Route),
   verifications: many(Verification),
+  subscription: one(Subscription, {
+    fields: [User.id],
+    references: [Subscription.userId],
+  }),
+}));
+
+export const SubscriptionRelations = relations(Subscription, ({ one }) => ({
+  user: one(User, {
+    fields: [Subscription.userId],
+    references: [User.id],
+  }),
 }));
 
 export const DecorationRelations = relations(Decoration, ({ many, one }) => ({

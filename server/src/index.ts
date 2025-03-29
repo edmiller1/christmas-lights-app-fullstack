@@ -7,6 +7,8 @@ import { decorationRouter } from "./routes/decoration";
 import { discordRouter } from "./routes/discord";
 import { statsRouter } from "./routes/stats";
 import { historyRouter } from "./routes/history";
+import { subscriptionRouter } from "./routes/subscription";
+import { cronRouter } from "./routes/cron";
 
 const app = new Hono();
 
@@ -35,6 +37,8 @@ app.route("/api/decoration", decorationRouter);
 app.route("/api/discord", discordRouter);
 app.route("/api/stats", statsRouter);
 app.route("/api/history", historyRouter);
+app.route("/api/subscription", subscriptionRouter);
+app.route("/api/cron", cronRouter);
 
 // Show available routes in development
 showRoutes(app);

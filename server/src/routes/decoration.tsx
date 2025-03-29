@@ -1,6 +1,11 @@
 import { Hono } from "hono";
 import { db } from "../db";
-import { authMiddleware } from "../lib/middleware";
+import {
+  authMiddleware,
+  checkFavouritesLimitMiddleware,
+  checkImageLimitMiddleware,
+  optionalAuthMiddleware,
+} from "../lib/middleware";
 import { zValidator } from "@hono/zod-validator";
 import { createDecorationSchema } from "../lib/schemas";
 import {
@@ -15,7 +20,7 @@ import {
   Verification,
   View,
 } from "../db/schema";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, sql } from "drizzle-orm";
 import { Cloudinary } from "../lib/cloudinary";
 import {
   getLocationData,
@@ -40,6 +45,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 decorationRouter.post(
   "/createDecoration",
   authMiddleware,
+  checkImageLimitMiddleware,
   zValidator("json", createDecorationSchema),
   async (c, next) => {
     try {
@@ -135,7 +141,7 @@ decorationRouter.post(
 /**
  * Get decoration by ID
  */
-decorationRouter.get("getDecoration", authMiddleware, async (c) => {
+decorationRouter.get("getDecoration", optionalAuthMiddleware, async (c) => {
   try {
     const decorationId = c.req.query("decorationId");
     const auth = c.get("user");
@@ -145,31 +151,67 @@ decorationRouter.get("getDecoration", authMiddleware, async (c) => {
     }
 
     if (auth) {
-      const user = await db.query.User.findFirst({
-        where: eq(User.externalId, auth.id),
-      });
-
-      if (user) {
-        const existingHistory = await db.query.History.findFirst({
-          where: and(
-            eq(History.userId, user.id),
-            eq(History.decorationId, decorationId)
-          ),
+      try {
+        const user = await db.query.User.findFirst({
+          where: eq(User.externalId, auth.id),
         });
 
-        if (existingHistory) {
-          await db
-            .update(History)
-            .set({
-              updatedAt: new Date(),
-            })
-            .where(eq(History.id, existingHistory.id));
-        } else {
-          await db.insert(History).values({
-            decorationId,
-            userId: user.id,
+        if (user) {
+          const existingHistory = await db.query.History.findFirst({
+            where: and(
+              eq(History.userId, user.id),
+              eq(History.decorationId, decorationId)
+            ),
           });
+
+          if (existingHistory) {
+            await db
+              .update(History)
+              .set({
+                updatedAt: new Date(),
+              })
+              .where(eq(History.id, existingHistory.id));
+          } else {
+            if (user.plan === "PRO") {
+              const historyCount = await db
+                .select({ count: count() })
+                .from(History)
+                .where(eq(History.userId, user.id));
+
+              const maxHistory = user.maxHistory || 20;
+
+              if (historyCount[0].count < maxHistory) {
+                await db.insert(History).values({
+                  decorationId,
+                  userId: user.id,
+                });
+              } else {
+                const oldestHistory = await db.query.History.findFirst({
+                  where: eq(History.userId, user.id),
+                  orderBy: (history) => [asc(history.createdAt)],
+                });
+
+                if (oldestHistory) {
+                  await db
+                    .delete(History)
+                    .where(eq(History.id, oldestHistory.id));
+
+                  await db.insert(History).values({
+                    decorationId,
+                    userId: user.id,
+                  });
+                }
+              }
+            } else {
+              await db.insert(History).values({
+                decorationId,
+                userId: user.id,
+              });
+            }
+          }
         }
+      } catch (historyError) {
+        console.error("Error tracking history:", historyError);
       }
     }
 
@@ -263,38 +305,43 @@ decorationRouter.get("getDecoration", authMiddleware, async (c) => {
 /**
  * Save decoration
  */
-decorationRouter.post("saveDecoration", authMiddleware, async (c) => {
-  try {
-    const auth = c.get("user");
-    const decorationId = c.req.query("decorationId");
+decorationRouter.post(
+  "saveDecoration",
+  authMiddleware,
+  checkFavouritesLimitMiddleware,
+  async (c) => {
+    try {
+      const auth = c.get("user");
+      const decorationId = c.req.query("decorationId");
 
-    if (!auth) {
-      return c.json({ error: "Not authenticated" }, 401);
+      if (!auth) {
+        return c.json({ error: "Not authenticated" }, 401);
+      }
+
+      if (!decorationId) {
+        return c.json({ error: "Decoration ID is required" }, 400);
+      }
+
+      const user = await db.query.User.findFirst({
+        where: eq(User.externalId, auth.id),
+      });
+
+      if (!user) {
+        return c.json({ error: "User not found" }, 404);
+      }
+
+      await db.insert(Favourite).values({
+        decorationId,
+        userId: user.id,
+      });
+
+      return c.json({ message: "Decoration saved" }, 200);
+    } catch (error) {
+      console.error("Error saving decoration:", error);
+      return c.json({ error: "Internal server error" }, 500);
     }
-
-    if (!decorationId) {
-      return c.json({ error: "Decoration ID is required" }, 400);
-    }
-
-    const user = await db.query.User.findFirst({
-      where: eq(User.externalId, auth.id),
-    });
-
-    if (!user) {
-      return c.json({ error: "User not found" }, 404);
-    }
-
-    await db.insert(Favourite).values({
-      decorationId,
-      userId: user.id,
-    });
-
-    return c.json({ message: "Decoration saved" }, 200);
-  } catch (error) {
-    console.error("Error saving decoration:", error);
-    return c.json({ error: "Internal server error" }, 500);
   }
-});
+);
 
 /**
  * Remove decoration
