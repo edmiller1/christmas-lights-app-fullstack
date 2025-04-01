@@ -7,7 +7,7 @@ interface ErrorResponse {
 
 export const getNotifications = async () => {
   const response = await privateAxios.get<Notification[]>(
-    "/api/auth/notifications"
+    "/auth/notifications"
   );
 
   if (response.status !== 200) {

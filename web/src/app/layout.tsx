@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EB_Garamond } from "next/font/google";
+import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "@/components/providers";
@@ -8,10 +8,10 @@ import { CreateDecoration } from "@/components/create-decoration/create-decorati
 import { UserLocation } from "@/components/user-location";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const ebGaramond = EB_Garamond({
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${ebGaramond.className} antialiased`}>
+      <body className={`${nunito.className} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

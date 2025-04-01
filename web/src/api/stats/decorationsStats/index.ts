@@ -20,7 +20,7 @@ interface DecorationsStatsResponse {
 
 export const getDecorationsStats = async () => {
   const response = await privateAxios.get<DecorationsStatsResponse>(
-    "/api/stats/decorationsStats"
+    "/stats/decorationsStats"
   );
 
   if (response.status !== 200) {

@@ -6,7 +6,7 @@ interface SettingsUpdate {
 
 export const updateSettings = async (settings: SettingsUpdate) => {
   const response = await privateAxios.put(
-    "/api/auth/updateSettings",
+    "/auth/updateSettings",
     JSON.stringify(settings)
   );
 

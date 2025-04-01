@@ -2,7 +2,7 @@ import privateAxios from "@/lib/axios";
 
 export const deleteAllNotifications = async () => {
   const response = await privateAxios.post<{ message: string; error?: string }>(
-    "/api/auth/deleteAllNotifications"
+    "/auth/deleteAllNotifications"
   );
 
   if (response.status !== 200) {

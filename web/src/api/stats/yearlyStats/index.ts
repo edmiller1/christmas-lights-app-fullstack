@@ -3,7 +3,7 @@ import { YearlyStatsResponse } from "./types";
 
 export const getYearlyStats = async (year: string) => {
   const response = await privateAxios.get<YearlyStatsResponse>(
-    "/api/stats/yearlyStats",
+    "/stats/yearlyStats",
     {
       params: {
         year,

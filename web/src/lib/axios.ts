@@ -5,10 +5,7 @@ const supabase = createClient();
 
 // Base configuration that's common to both instances
 const baseConfig = {
-  baseURL:
-    process.env.NODE_ENV === "development"
-      ? process.env.NEXT_PUBLIC_API_URL
-      : "",
+  baseURL: process.env.NODE_ENV === "development" ? "/api" : "",
   headers: {
     "Content-Type": "application/json",
   },

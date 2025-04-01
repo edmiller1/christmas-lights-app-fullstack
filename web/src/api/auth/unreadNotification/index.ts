@@ -2,7 +2,7 @@ import privateAxios from "@/lib/axios";
 
 export const markNotificationAsUnread = async (notificationId: string) => {
   const response = await privateAxios.put<{ message: string; error?: string }>(
-    "/api/auth/unreadNotification",
+    "/auth/unreadNotification",
     {
       notificationId,
     }

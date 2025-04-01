@@ -6,7 +6,7 @@ interface UpdateInfoArgs {
 }
 
 export const updateInfo = async (info: UpdateInfoArgs) => {
-  const response = await privateAxios.put("/api/auth/updateInfo", info);
+  const response = await privateAxios.put("/auth/updateInfo", info);
 
   if (response.status !== 200) {
     throw new Error(response.data.error);

@@ -126,7 +126,7 @@ const HistoryPage = () => {
           </div>
           <h3 className="mt-4 text-lg font-semibold">No history</h3>
           <p className="text-base text-muted-foreground">
-            Visiting decorations to see them here
+            Visit decorations to see them here
           </p>
         </div>
       )}

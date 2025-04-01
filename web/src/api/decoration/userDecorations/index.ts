@@ -8,7 +8,7 @@ interface UserDecorationsResponse {
 
 export const getUserDecorations = async () => {
   const response = await privateAxios.get<UserDecorationsResponse>(
-    "/api/decoration/userDecorations"
+    "/decoration/userDecorations"
   );
 
   if (response.status !== 200) {

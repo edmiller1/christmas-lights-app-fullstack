@@ -3,7 +3,7 @@ import { ReportDecorationArgs, ReportDecorationResponse } from "./types";
 
 export const reportDecoration = async (data: ReportDecorationArgs) => {
   const response = await privateAxios.post<ReportDecorationResponse>(
-    "/api/decoration/reportDecoration",
+    "/decoration/reportDecoration",
     data
   );
 

@@ -3,7 +3,7 @@ import { UpdateDecorationArgs } from "./types";
 
 export const updateDecoration = async (data: UpdateDecorationArgs) => {
   const response = await privateAxios.put<{ message: string; error?: string }>(
-    "/api/decoration/updateDecoration",
+    "/decoration/updateDecoration",
     data
   );
 

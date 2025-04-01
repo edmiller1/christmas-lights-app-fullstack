@@ -7,8 +7,7 @@ interface AddToHistoryResponse {
 
 export const addToHistory = async (decorationId: string) => {
   const response = await privateAxios.post<AddToHistoryResponse>(
-    "/api/history/addToHistory",
-
+    "/history/addToHistory",
     null,
     {
       params: {

@@ -3,7 +3,7 @@ import privateAxios from "@/lib/axios";
 
 export const createDecoration = async (data: CreateDecorationArgs) => {
   const response = await privateAxios.post<createDecorationResponse>(
-    `/api/decoration/createDecoration`,
+    `/decoration/createDecoration`,
     data
   );
 

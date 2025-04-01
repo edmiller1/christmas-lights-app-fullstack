@@ -10,16 +10,13 @@ export async function getServerUser(): Promise<User | null> {
 
     if (!session) return null;
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/user`,
-      {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      }
-    );
+    const response = await fetch(`${process.env.BACKEND_URL}/api/auth/user`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
 
     if (response.ok) {
       return await response.json();

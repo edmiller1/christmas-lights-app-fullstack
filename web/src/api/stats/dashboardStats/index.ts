@@ -3,7 +3,7 @@ import { DashboardStatsResponse } from "./types";
 
 export const getDashboardStats = async () => {
   const response = await privateAxios.get<DashboardStatsResponse>(
-    "/api/stats/dashboardStats"
+    "/stats/dashboardStats"
   );
 
   if (response.status !== 200) {

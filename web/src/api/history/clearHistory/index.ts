@@ -7,7 +7,7 @@ interface ClearHistoryResponse {
 
 export const clearHistory = async () => {
   const response = await privateAxios.delete<ClearHistoryResponse>(
-    "/api/history/clearHistory"
+    "/history/clearHistory"
   );
 
   if (response.status !== 200) {

@@ -2,7 +2,7 @@ import privateAxios from "@/lib/axios";
 
 export const markAllNotificationsAsRead = async () => {
   const response = await privateAxios.put<{ message: string; error?: string }>(
-    "/api/auth/readAllNotifications"
+    "/auth/readAllNotifications"
   );
 
   if (response.status !== 200) {

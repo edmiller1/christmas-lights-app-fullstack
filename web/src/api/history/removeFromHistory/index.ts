@@ -7,7 +7,7 @@ interface RemoveFromHistoryResponse {
 
 export const removeFromHistory = async (decorationId: string) => {
   const response = await privateAxios.delete<RemoveFromHistoryResponse>(
-    "/api/history/removeFromHistory",
+    "/history/removeFromHistory",
     {
       params: { decorationId },
     }

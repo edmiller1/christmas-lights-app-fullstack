@@ -7,7 +7,7 @@ interface RemoveDecorationResponse {
 
 export const removeDecoration = async (decorationId: string) => {
   const response = await privateAxios.post<RemoveDecorationResponse>(
-    "/api/decoration/removeDecoration",
+    "/decoration/removeDecoration",
     null,
     {
       params: {

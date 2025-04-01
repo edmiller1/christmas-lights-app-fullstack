@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   try {
     // Exchange the code for a session
     const supabase = await createClient();
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
       console.error("Session exchange error:", error);
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
     // Sync user with database
     try {
-      (await getDatabaseSyncStatus(data.session.access_token)) as SyncResponse;
+      (await getDatabaseSyncStatus()) as SyncResponse;
 
       // Determine the redirect URL based on environment
       const forwardedHost = request.headers.get("x-forwarded-host");

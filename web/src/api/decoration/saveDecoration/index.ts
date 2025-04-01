@@ -7,7 +7,7 @@ interface SaveDecorationResponse {
 
 export const saveDecoration = async (decorationId: string) => {
   const response = await privateAxios.post<SaveDecorationResponse>(
-    "/api/decoration/saveDecoration",
+    "/decoration/saveDecoration",
     null,
     {
       params: {
